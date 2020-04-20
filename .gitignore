@@ -1,0 +1,6 @@
+.idea
+*.pyo
+*.pyc
+__pycache__
+resources/providers.json
+resources/provider_icons

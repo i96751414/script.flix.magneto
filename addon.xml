@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="script.flix.magneto" name="Magneto" version="0.0.1" provider-name="unknown">
+    <requires>
+        <import addon="xbmc.python" version="2.24.0"/>
+        <import addon="script.module.requests" version="2.22.0"/>
+        <import addon="script.module.htmlement" version="1.0.0"/>
+        <import addon="plugin.video.torrest"/>
+        <import addon="plugin.video.flix"/>
+    </requires>
+    <extension point="xbmc.python.script" library="main.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <language>en</language>
+        <summary lang="en">Flix Magnets Provider</summary>
+        <description lang="en">A magnets scraper which works as provider for Flix.</description>
+        <platform>all</platform>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
+</addon>
