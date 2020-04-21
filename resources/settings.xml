@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <!-- General -->
+    <category label="30000">
+    </category>
+    <!-- Providers -->
+    <category label="30001">
+    </category>
+</settings>

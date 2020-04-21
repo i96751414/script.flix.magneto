@@ -47,18 +47,18 @@ class Scraper(object):
     @staticmethod
     def from_data(data):
         return Scraper(
-            data["name"], data["icon"], data["base_url"], ResultsParser(**data["results_parser"]),
+            data["name"], data["base_url"], ResultsParser(**data["results_parser"]),
             additional_parsers=[Parser(**d) for d in data.get("additional_parsers", [])],
-            keywords=data.get("keywords", {}))
+            keywords=data.get("keywords"), attributes=data.get("attributes"))
 
-    def __init__(self, name, icon, base_url, results_parser, additional_parsers=None, keywords=None):
-        # type:(str,str,str,ResultsParser,List[Parser], Dict[str, str]) ->None
+    def __init__(self, name, base_url, results_parser, additional_parsers=None, keywords=None, attributes=None):
+        # type:(str,str,ResultsParser,List[Parser], Dict[str, str], dict) ->None
         self._name = name
-        self._icon = icon
         self._base_url = base_url
         self._results_parser = results_parser
         self._additional_parsers = additional_parsers or []
         self._keywords = keywords or {}
+        self._attributes = attributes or {}
         self._session = requests.Session()
         self._session.headers["User-Agent"] = self._user_agent
 
@@ -67,8 +67,11 @@ class Scraper(object):
         return self._name
 
     @property
-    def icon(self):
-        return self._icon
+    def id(self):
+        return self._spaces_re.sub(".", self._name.lower())
+
+    def get_attribute(self, key):
+        return self._attributes[key]
 
     def _get_url(self, value):
         if not value.startswith("http"):
@@ -118,3 +121,10 @@ class Scraper(object):
             for result in results:
                 self._parse_additional(parser, result)
         return results
+
+
+def generate_settings(path, enabled_count=-1):
+    scrapers = Scraper.get_scrapers(path)
+    for i, scraper in enumerate(scrapers):
+        default = "false" if 0 <= enabled_count <= i else "true"
+        print('<setting id="{}" type="bool" label="{}" default="{}"/>'.format(scraper.id, scraper.name, default))
