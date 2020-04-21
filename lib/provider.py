@@ -1,6 +1,6 @@
 from flix.provider import Provider
 
-import xbmcgui
+
 class MagnetoProvider(Provider):
     def search(self, query):
         return []
