@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from multiprocessing.pool import ThreadPool
 
 import htmlement
 import requests
@@ -29,6 +30,12 @@ class ResultsParser(Parser):
     def __init__(self, rows, *args, **kwargs):
         super(ResultsParser, self).__init__(*args, **kwargs)
         self.rows = rows
+
+
+def _run(pool, func, iterable):
+    if pool is None:
+        return [func(data) for data in iterable]
+    return pool.map(func, iterable)
 
 
 class Scraper(object):
@@ -91,7 +98,8 @@ class Scraper(object):
                 result[key] = value.format(**result)
         return results
 
-    def _parse_additional(self, parser, result):
+    def _parse_additional(self, data):
+        parser, result = data
         url = self._get_url(parser.url.format(**result))
         logging.debug("Getting additional results for url %s", url)
         r = self._session.get(url)
@@ -115,12 +123,43 @@ class Scraper(object):
         query = self._keywords[keyword].format(**formats)
         return self._spaces_re.sub(" ", query.strip())
 
-    def parse(self, keyword, **formats):
-        results = self._parse_results(self._format_query(keyword, formats))
+    def parse(self, keyword, formats, pool=None):
+        return self.parse_query(self._format_query(keyword, formats), pool=pool)
+
+    def parse_query(self, query, pool=None):
+        results = self._parse_results(query)
         for parser in self._additional_parsers:
-            for result in results:
-                self._parse_additional(parser, result)
+            _run(pool, self._parse_additional, [(parser, result) for result in results])
         return results
+
+
+class ScraperRunner(object):
+    def __init__(self, scrapers, num_threads=10):
+        self._scrapers = scrapers
+        self._pool = ThreadPool(num_threads)
+
+    def __getattr__(self, item):
+        if item not in ("parse", "parse_query"):
+            raise ValueError("item must be one of parse/parse_query")
+
+        def wrapper(*args, **kwargs):
+            kwargs["pool"] = self._pool
+            funcs = [getattr(scraper, item) for scraper in self._scrapers]
+            results = [self._pool.apply_async(f, args, kwargs) for f in funcs]
+            return [result.get() for result in results]
+
+        return wrapper
+
+    def close(self):
+        self._pool.close()
+        self._pool.join()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
 
 
 def generate_settings(path, enabled_count=-1):
