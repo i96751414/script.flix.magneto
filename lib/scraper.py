@@ -77,8 +77,14 @@ class Scraper(object):
     def id(self):
         return self._spaces_re.sub(".", self._name.lower())
 
-    def get_attribute(self, key):
-        return self._attributes[key]
+    def get_attribute(self, key, **kwargs):
+        try:
+            return self._attributes[key]
+        except KeyError as e:
+            if "default" in kwargs:
+                return kwargs["default"]
+            else:
+                raise e
 
     def _get_url(self, value):
         if not value.startswith("http"):
@@ -144,9 +150,9 @@ class ScraperRunner(object):
 
         def wrapper(*args, **kwargs):
             kwargs["pool"] = self._pool
-            funcs = [getattr(scraper, item) for scraper in self._scrapers]
-            results = [self._pool.apply_async(f, args, kwargs) for f in funcs]
-            return [result.get() for result in results]
+            results = [(scraper, self._pool.apply_async(getattr(scraper, item), args, kwargs))
+                       for scraper in self._scrapers]
+            return [(scraper, result.get()) for scraper, result in results]
 
         return wrapper
 
