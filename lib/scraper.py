@@ -152,7 +152,8 @@ class ScraperRunner(object):
             kwargs["pool"] = self._pool
             results = [(scraper, self._pool.apply_async(getattr(scraper, item), args, kwargs))
                        for scraper in self._scrapers]
-            return [(scraper, result.get()) for scraper, result in results]
+            for scraper, scraper_results in results:
+                yield scraper, scraper_results.get()
 
         return wrapper
 
@@ -173,3 +174,9 @@ def generate_settings(path, enabled_count=-1):
     for i, scraper in enumerate(scrapers):
         default = "false" if 0 <= enabled_count <= i else "true"
         print('<setting id="{}" type="bool" label="{}" default="{}"/>'.format(scraper.id, scraper.name, default))
+
+
+def main():
+    import os
+    path = os.path.join(os.path.dirname(__file__), "..", "resources", "providers.json")
+    generate_settings(path, enabled_count=5)
