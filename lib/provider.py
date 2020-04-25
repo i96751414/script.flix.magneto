@@ -51,14 +51,20 @@ class Result(object):
         self._get_optional_fields(result)
         self._get_filters(result)
 
+    @property
+    def seeds(self):
+        return (sum(self._seeds) // len(self._seeds)) if self._seeds else None
+
+    @property
+    def leeches(self):
+        return (sum(self._leeches) // len(self._leeches)) if self._leeches else None
+
     def to_provider_result(self):
         label = []
         if self._resolution is not Unknown:
             label.append(bold(colored_text(self._resolution.name, resolution_colors[self._resolution.name])))
         if self._seeds and self._leeches:
-            seeds = sum(self._seeds) // len(self._seeds)
-            leeches = sum(self._leeches) // len(self._leeches)
-            label.append("({}/{}) ".format(seeds, leeches))
+            label.append("({}/{}) ".format(self.seeds, self.leeches))
         if self._size is not None:
             label.append(bold("[{}]".format(self._size)))
         for field in (self._release, self._video_codec, self._audio_codec):
@@ -75,6 +81,13 @@ class Result(object):
             icon=icon,
             url="plugin://plugin.video.torrest/play_magnet/{}".format(self._magnet),
         )
+
+    def get_factor(self, seeds_factor=4, default_seeds=0, leeches_factor=1, default_leeches=0,
+                   resolution_factor=1000, default_resolution=2):
+        seeds = self.seeds if self._seeds else default_seeds
+        leeches = self.leeches if self._leeches else default_leeches
+        resolution = default_resolution if self._resolution is Unknown else self._resolution.factor
+        return seeds * seeds_factor + leeches * leeches_factor + resolution * resolution_factor
 
 
 def perform_search(search_type, data, num_threads=10):
@@ -98,7 +111,7 @@ def perform_search(search_type, data, num_threads=10):
                 else:
                     magnet_result.add_result(scraper, scraper_result)
 
-    return [r.to_provider_result() for r in results.values()]
+    return [r.to_provider_result() for r in sorted(results.values(), key=Result.get_factor, reverse=True)]
 
 
 class MagnetoProvider(Provider):
