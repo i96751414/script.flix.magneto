@@ -78,26 +78,25 @@ class Result(object):
 
 
 def perform_search(search_type, data, num_threads=10):
+    results = {}
     scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"))
                 if get_boolean_setting(s.id)]
-    runner = ScraperRunner(scrapers, num_threads=num_threads)
-    runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
+    with ScraperRunner(scrapers, num_threads=num_threads) as runner:
+        runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
 
-    results = {}
+        for scraper, scraper_results in runner_data:
+            for scraper_result in scraper_results:
+                magnet = Magnet(scraper_result["magnet"])
+                try:
+                    info_hash = magnet.parse_info_hash()
+                except InvalidMagnet:
+                    continue
 
-    for scraper, scraper_results in runner_data:
-        for scraper_result in scraper_results:
-            magnet = Magnet(scraper_result["magnet"])
-            try:
-                info_hash = magnet.parse_info_hash()
-            except InvalidMagnet:
-                continue
-
-            magnet_result = results.get(info_hash)  # type: Result
-            if magnet_result is None:
-                results[info_hash] = Result(scraper, scraper_result)
-            else:
-                magnet_result.add_result(scraper, scraper_result)
+                magnet_result = results.get(info_hash)  # type: Result
+                if magnet_result is None:
+                    results[info_hash] = Result(scraper, scraper_result)
+                else:
+                    magnet_result.add_result(scraper, scraper_result)
 
     return [r.to_provider_result() for r in results.values()]
 
