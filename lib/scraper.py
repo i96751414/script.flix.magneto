@@ -1,7 +1,9 @@
 import json
 import logging
 import re
+import unicodedata
 from multiprocessing.pool import ThreadPool
+from string import Formatter
 
 import htmlement
 import requests
@@ -13,10 +15,35 @@ except ImportError:
     pass
 
 try:
-    from urllib.parse import quote_plus
+    from urllib.parse import quote
 except ImportError:
     # noinspection PyUnresolvedReferences
-    from urllib import quote_plus
+    from urllib import quote
+
+
+def strip_accents(s):
+    return "".join([c for c in unicodedata.normalize("NFD", s) if not unicodedata.combining(c)])
+
+
+class ExtendedFormatter(Formatter):
+    def convert_field(self, value, conversion):
+        if conversion == "u":
+            return value.upper()
+        elif conversion == "l":
+            return value.lower()
+        elif conversion == "A":
+            return strip_accents(value)
+        return super(ExtendedFormatter, self).convert_field(value, conversion)
+
+    def format_field(self, value, format_spec):
+        if format_spec == "q":
+            return quote(value, "")
+        elif format_spec.startswith("q") and len(format_spec) == 2:
+            return quote(value, " ").replace(" ", format_spec[1])
+        return super(ExtendedFormatter, self).format_field(value, format_spec)
+
+
+_formatter = ExtendedFormatter()
 
 
 class Parser(object):
@@ -67,7 +94,10 @@ class Scraper(object):
         self._keywords = keywords or {}
         self._attributes = attributes or {}
         self._session = requests.Session()
-        self._session.headers["User-Agent"] = self._user_agent
+        self._session.headers = {
+            "User-Agent": self._user_agent,
+            "Accept-Encoding": "gzip",
+        }
 
     @property
     def name(self):
@@ -92,7 +122,7 @@ class Scraper(object):
         return value
 
     def _parse_results(self, query):
-        url = self._get_url(self._results_parser.url.format(query=quote_plus(query)))
+        url = self._get_url(_formatter.format(self._results_parser.url, query=query))
         logging.debug("Getting results for url %s", url)
         r = self._session.get(url)
         r.raise_for_status()
@@ -101,12 +131,12 @@ class Scraper(object):
                    for element in root.findall(self._results_parser.rows)]
         for key, value in self._results_parser.mutate.items():
             for result in results:
-                result[key] = value.format(**result)
+                result[key] = _formatter.format(value, **result)
         return results
 
     def _parse_additional(self, data):
         parser, result = data
-        url = self._get_url(parser.url.format(**result))
+        url = self._get_url(_formatter.format(parser.url, **result))
         logging.debug("Getting additional results for url %s", url)
         r = self._session.get(url)
         r.raise_for_status()
@@ -114,9 +144,10 @@ class Scraper(object):
         for key, xpath in parser.data.items():
             result[key] = self._xpath_element(root, xpath)
         for key, value in parser.mutate.items():
-            result[key] = value.format(**result)
+            result[key] = _formatter.format(value, **result)
 
     def _xpath_element(self, element, path):
+        logging.debug("Getting %s path from element %s", path, element.tag)
         attr_match = self._attr_re.match(path)
         if attr_match:
             return element.find(attr_match.group(1)).attrib[attr_match.group(2)]
@@ -126,7 +157,7 @@ class Scraper(object):
         raise ValueError("Only .../@attr and .../text() paths are supported")
 
     def _format_query(self, keyword, formats):
-        query = self._keywords[keyword].format(**formats)
+        query = _formatter.format(self._keywords[keyword], **formats)
         return self._spaces_re.sub(" ", query.strip())
 
     def parse(self, keyword, formats, pool=None):
