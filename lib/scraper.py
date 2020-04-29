@@ -4,6 +4,7 @@ import re
 import unicodedata
 from multiprocessing.pool import ThreadPool
 from string import Formatter
+from xml.etree import ElementTree
 
 import htmlement
 import requests
@@ -19,6 +20,31 @@ try:
 except ImportError:
     # noinspection PyUnresolvedReferences
     from urllib import quote
+
+_invalid_xml_tag_re = re.compile(r"[^a-zA-Z0-9-_.]")
+
+
+def create_xml_tree(obj, root_name="root", attribute_type=False):
+    root = ElementTree.Element(root_name)
+    _create_xml_tree(root, obj, attribute_type=attribute_type)
+    return root
+
+
+def _sub_element(parent, tag, **kwargs):
+    return ElementTree.SubElement(parent, _invalid_xml_tag_re.sub("", tag), **kwargs)
+
+
+def _create_xml_tree(root, obj, attribute_type=False):
+    if isinstance(obj, (tuple, list)):
+        for v in obj:
+            _create_xml_tree(_sub_element(root, "item"), v)
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            _create_xml_tree(_sub_element(root, k), v)
+    else:
+        if attribute_type:
+            root.attrib["type"] = obj.__class__.__name__
+        root.text = str(obj)
 
 
 def strip_accents(s):
@@ -47,9 +73,11 @@ _formatter = ExtendedFormatter()
 
 
 class Parser(object):
-    def __init__(self, url, data, mutate=None):
+    # noinspection PyShadowingBuiltins
+    def __init__(self, url, data, type="html", mutate=None):
         self.url = url
         self.data = data
+        self.type = type
         self.mutate = mutate or {}
 
 
@@ -126,7 +154,10 @@ class Scraper(object):
         logging.debug("Getting results for url %s", url)
         r = self._session.get(url)
         r.raise_for_status()
-        root = htmlement.fromstring(r.content)
+        if self._results_parser.type == "json":
+            root = create_xml_tree(json.loads(r.content))
+        else:
+            root = htmlement.fromstring(r.content)
         results = [{key: self._xpath_element(element, xpath) for key, xpath in self._results_parser.data.items()}
                    for element in root.findall(self._results_parser.rows)]
         for key, value in self._results_parser.mutate.items():
@@ -140,7 +171,10 @@ class Scraper(object):
         logging.debug("Getting additional results for url %s", url)
         r = self._session.get(url)
         r.raise_for_status()
-        root = htmlement.fromstring(r.content)
+        if parser.type == "json":
+            root = create_xml_tree(json.loads(r.content))
+        else:
+            root = htmlement.fromstring(r.content)
         for key, xpath in parser.data.items():
             result[key] = self._xpath_element(root, xpath)
         for key, value in parser.mutate.items():
