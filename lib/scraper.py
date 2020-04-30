@@ -185,7 +185,10 @@ class ScraperRunner(object):
             results = [(scraper, self._pool.apply_async(getattr(scraper, item), args, kwargs))
                        for scraper in self._scrapers]
             for scraper, scraper_results in results:
-                yield scraper, scraper_results.get()
+                try:
+                    yield scraper, scraper_results.get()
+                except Exception as e:
+                    logging.error("Failed running scraper %s: %s", scraper.name, e)
 
         return wrapper
 
