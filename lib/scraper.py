@@ -30,21 +30,31 @@ def create_xml_tree(obj, root_name="root", attribute_type=False):
     return root
 
 
-def _sub_element(parent, tag, **kwargs):
-    return ElementTree.SubElement(parent, _invalid_xml_tag_re.sub("", tag), **kwargs)
+def _check_tag(tag, invalid_xml_tag_re=re.compile(r"[^a-zA-Z0-9-_.]")):
+    tag = invalid_xml_tag_re.sub("", tag)
+    if len(tag) == 0 or tag[0].isdigit():
+        tag = "_" + tag
+    return tag
 
 
-def _create_xml_tree(root, obj, attribute_type=False):
+def _create_xml_tree(root, obj, **kwargs):
+    attribute_type = kwargs.get("attribute_type", False)
+    tag_str = kwargs.get("tag_str", str)
+
     if isinstance(obj, (tuple, list)):
         for v in obj:
-            _create_xml_tree(_sub_element(root, "item"), v)
+            _create_xml_tree(ElementTree.SubElement(root, "item"), v, **kwargs)
     elif isinstance(obj, dict):
         for k, v in obj.items():
-            _create_xml_tree(_sub_element(root, k), v)
+            if attribute_type:
+                _kwargs, tag = {"key_type": k.__class__.__name__, "key": tag_str(k)}, "item"
+            else:
+                _kwargs, tag = {}, _check_tag(tag_str(k))
+            _create_xml_tree(ElementTree.SubElement(root, tag, **_kwargs), v, **kwargs)
     else:
-        if attribute_type:
-            root.attrib["type"] = obj.__class__.__name__
-        root.text = str(obj)
+        root.text = tag_str(obj)
+    if attribute_type:
+        root.attrib["type"] = obj.__class__.__name__
 
 
 def strip_accents(s):
