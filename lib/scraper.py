@@ -26,6 +26,14 @@ def strip_accents(s):
     return "".join([c for c in unicodedata.normalize("NFD", s) if not unicodedata.combining(c)])
 
 
+def sizeof_fmt(num, suffix="B", divisor=1000.0):
+    for unit in ("", "k", "M", "G", "T", "P", "E", "Z"):
+        if abs(num) < divisor:
+            return "{:.2f} {}{}".format(num, unit, suffix)
+        num /= divisor
+    return "{:.2f} {}{}".format(num, "Y", suffix)
+
+
 class ExtendedFormatter(Formatter):
     def convert_field(self, value, conversion):
         if conversion == "u":
@@ -34,13 +42,15 @@ class ExtendedFormatter(Formatter):
             return value.lower()
         elif conversion == "A":
             return strip_accents(value)
+        elif conversion == "b":
+            return sizeof_fmt(int(value))
         return super(ExtendedFormatter, self).convert_field(value, conversion)
 
     def format_field(self, value, format_spec):
         if format_spec == "q":
-            return quote(value, "")
+            return quote(value.encode("utf-8"), "")
         elif format_spec.startswith("q") and len(format_spec) == 2:
-            return quote(value, " ").replace(" ", format_spec[1])
+            return quote(value.encode("utf-8"), " ").replace(" ", format_spec[1])
         return super(ExtendedFormatter, self).format_field(value, format_spec)
 
 

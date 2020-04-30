@@ -79,7 +79,7 @@ def _check_tag(tag, invalid_xml_tag_re=re.compile(r"[^a-zA-Z0-9-_.]")):
 
 def _create_xml_tree(root, obj, **kwargs):
     attribute_type = kwargs.get("attribute_type", False)
-    tag_str = kwargs.get("tag_str", str)
+    tag_str = kwargs.get("tag_str", u"".__class__)
 
     if isinstance(obj, (tuple, list)):
         for v in obj:

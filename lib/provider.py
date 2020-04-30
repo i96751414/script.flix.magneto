@@ -104,6 +104,8 @@ def perform_search(search_type, data, num_threads=10):
                     info_hash = magnet.parse_info_hash()
                 except InvalidMagnet:
                     continue
+                if info_hash == "0" * 40:
+                    continue
 
                 magnet_result = results.get(info_hash)  # type: Result
                 if magnet_result is None:
