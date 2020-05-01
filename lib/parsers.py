@@ -5,6 +5,8 @@ from xml.etree import ElementTree
 
 import htmlement
 
+from lib.utils import text
+
 
 class ETParser(object):
     _attr_re = re.compile(r"^(.+)/@([a-zA-Z0-9_ ]+)$")
@@ -79,7 +81,7 @@ def _check_tag(tag, invalid_xml_tag_re=re.compile(r"[^a-zA-Z0-9-_.]")):
 
 def _create_xml_tree(root, obj, **kwargs):
     attribute_type = kwargs.get("attribute_type", False)
-    tag_str = kwargs.get("tag_str", u"".__class__)
+    tag_str = kwargs.get("tag_str", text)
 
     if isinstance(obj, (tuple, list)):
         for v in obj:

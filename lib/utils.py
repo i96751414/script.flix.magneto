@@ -6,22 +6,17 @@ except ImportError:
     # noinspection PyUnresolvedReferences
     from urllib import unquote, unquote_plus
 
+text = u"".__class__
 
-class Title(object):
-    def __init__(self, title, titles=None):
-        # type:(str, dict)->None
-        self._title = title
+
+class Title(text):
+    def __new__(cls, title, titles=None):
+        self = super(Title, cls).__new__(cls, title)
         self._titles = titles or dict()
-
-    @property
-    def title(self):
-        return self._title
+        return self
 
     def __getattr__(self, item):
-        return self._titles.get(item, self._title)
-
-    def __format__(self, format_spec):
-        return self._title
+        return self._titles.get(item, self)
 
 
 class InvalidMagnet(Exception):
@@ -64,9 +59,9 @@ resolution_colors = {
 }
 
 
-def colored_text(text, color):
-    return "[COLOR {}]{}[/COLOR]".format(color, text)
+def colored_text(s, color):
+    return "[COLOR {}]{}[/COLOR]".format(color, s)
 
 
-def bold(text):
-    return "[B]{}[/B]".format(text)
+def bold(s):
+    return "[B]{}[/B]".format(s)
