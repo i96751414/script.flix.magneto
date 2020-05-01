@@ -20,7 +20,7 @@ class Title(object):
     def __getattr__(self, item):
         return self._titles.get(item, self._title)
 
-    def __str__(self):
+    def __format__(self, format_spec):
         return self._title
 
 
