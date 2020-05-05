@@ -82,12 +82,11 @@ class Result(object):
             url="plugin://plugin.video.torrest/play_magnet/{}".format(self._magnet),
         )
 
-    def get_factor(self, seeds_factor=4, default_seeds=0, leeches_factor=1, default_leeches=0,
-                   resolution_factor=300, default_resolution=2):
+    def get_factor(self, seeds_factor=4, default_seeds=0, leeches_factor=1, default_leeches=0, default_resolution=2):
         seeds = self.seeds if self._seeds else default_seeds
         leeches = self.leeches if self._leeches else default_leeches
         resolution = default_resolution if self._resolution is Unknown else self._resolution.factor
-        return seeds * seeds_factor + leeches * leeches_factor + resolution * resolution_factor
+        return max(seeds * seeds_factor + leeches * leeches_factor, 1) * resolution
 
 
 def perform_search(search_type, data, num_threads=10):
