@@ -4,6 +4,7 @@
         <import addon="xbmc.python" version="2.24.0"/>
         <import addon="script.module.requests" version="2.22.0"/>
         <import addon="script.module.htmlement" version="1.0.0"/>
+        <import addon="script.module.futures" version="2.2.0"/>
         <import addon="plugin.video.torrest"/>
         <import addon="plugin.video.flix"/>
     </requires>

@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import unicodedata
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 from string import Formatter
 
 import requests
@@ -95,7 +95,7 @@ class ResultsParser(Parser):
 def _run(pool, func, iterable):
     if pool is None:
         return [func(data) for data in iterable]
-    return pool.map(func, iterable)
+    return list(pool.map(func, iterable))
 
 
 class Scraper(object):
@@ -184,7 +184,7 @@ class Scraper(object):
 class ScraperRunner(object):
     def __init__(self, scrapers, num_threads=10):
         self._scrapers = scrapers
-        self._pool = ThreadPool(num_threads)
+        self._pool = ThreadPoolExecutor(num_threads)
 
     def __getattr__(self, item):
         if item not in ("parse", "parse_query"):
@@ -192,19 +192,18 @@ class ScraperRunner(object):
 
         def wrapper(*args, **kwargs):
             kwargs["pool"] = self._pool
-            results = [(scraper, self._pool.apply_async(getattr(scraper, item), args, kwargs))
+            results = [(scraper, self._pool.submit(getattr(scraper, item), *args, **kwargs))
                        for scraper in self._scrapers]
             for scraper, scraper_results in results:
                 try:
-                    yield scraper, scraper_results.get()
+                    yield scraper, scraper_results.result()
                 except Exception as e:
                     logging.error("Failed running scraper %s: %s", scraper.name, e)
 
         return wrapper
 
     def close(self):
-        self._pool.close()
-        self._pool.join()
+        self._pool.shutdown()
 
     def __enter__(self):
         return self
