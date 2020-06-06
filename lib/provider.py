@@ -122,6 +122,12 @@ class MagnetoProvider(Provider):
     def search_movie(self, tmdb_id, title, titles, year=None):
         return perform_search("movie", dict(tmdb_id=tmdb_id, title=Title(title, titles), year=year or ""))
 
+    def search_show(self, tmdb_id, show_title, titles, year=None):
+        return perform_search("show", dict(tmdb_id=tmdb_id, title=Title(show_title, titles), year=year or ""))
+
+    def search_season(self, tmdb_id, show_title, season_number, titles):
+        return perform_search("season", dict(tmdb_id=tmdb_id, title=Title(show_title, titles), season=season_number))
+
     def search_episode(self, tmdb_id, show_title, season_number, episode_number, titles):
         return perform_search("episode", dict(
             tmdb_id=tmdb_id, title=Title(show_title, titles), season=season_number, episode=episode_number))
