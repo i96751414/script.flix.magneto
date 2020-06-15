@@ -1,5 +1,10 @@
 import os
 
+try:
+    from urllib import quote_plus
+except ImportError:
+    from urllib.parse import quote_plus
+
 from flix.kodi import ADDON_PATH, get_boolean_setting
 from flix.provider import Provider, ProviderResult
 from lib.filters import Unknown, Resolution, ReleaseType, SceneTags, VideoCodec, AudioCodec
@@ -79,7 +84,7 @@ class Result(object):
             label=" ".join(label),
             label2=self._title,
             icon=icon,
-            url="plugin://plugin.video.torrest/play_magnet/{}".format(self._magnet),
+            url="plugin://plugin.video.torrest/play_magnet?magnet={}".format(quote_plus(self._magnet)),
         )
 
     def get_factor(self, seeds_factor=4, default_seeds=0, leeches_factor=1, default_leeches=0, default_resolution=2):
