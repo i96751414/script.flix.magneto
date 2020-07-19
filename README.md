@@ -11,6 +11,10 @@ Adding a provider requires 3 simple steps:
   ```xml
   <setting id="<provider.id>" type="bool" label="<provider.name>" default="<true|false>"/>  
   ```
+  where:
+  - `provider.id` - The provider name (as specified in `providers.json`) in lower case with all spaces replaced by dots.
+  - `provider.name` - The provider name (as specified in `providers.json`).
+  - The default boolean value specifies if the provider is either enabled (true) or disabled (false) by default.
 
 ### providers.json html example with additional parser
 
