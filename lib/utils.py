@@ -65,3 +65,18 @@ def colored_text(s, color):
 
 def bold(s):
     return "[B]{}[/B]".format(s)
+
+
+def sizeof(num, suffix='B'):
+    """ Utility method to convert a file size in bytes to a human-readable format
+    Args:
+        num    (int): Number of bytes
+        suffix (str): Suffix for 'bytes'
+    Returns:
+        str: The formatted file size as a string, eg. ``1.21 GB``
+    """
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+        if abs(num) < 1024.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f %s%s" % (num, 'Y', suffix)
