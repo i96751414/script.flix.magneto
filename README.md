@@ -5,7 +5,7 @@ A [Flix](https://github.com/i96751414/plugin.video.flix) provider which uses [To
 ## How to add a magnet provider?
 
 Adding a provider requires 3 simple steps:
-- Add the provider definition in `resources/providers.json` (see [provider-schema.json](resources/providers-schema.json)
+- Add the provider definition in `resources/providers.json` (see [provider-schema.json](resources/providers-schema.json))
 - Add the provider icon in `resources/provider_icons`
 - Add the provider to `resources/settings.xml`:
   ```xml
