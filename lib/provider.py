@@ -69,7 +69,7 @@ class Result(object):
         if self._resolution is not Unknown:
             label.append(bold(colored_text(self._resolution.name, resolution_colors[self._resolution.name])))
         if self._seeds and self._leeches:
-            label.append("({}/{}) ".format(self.seeds, self.leeches))
+            label.append("({}/{}) ".format(sizeof(int(self._size)))))
         if self._size is not None:
             label.append(bold("[{}]".format(self._size)))
         for field in (self._release, self._video_codec, self._audio_codec):
