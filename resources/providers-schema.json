@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "array",
+  "title": "The providers list",
+  "description": "The list containing each provider definition.",
+  "items": [
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "The provider title",
+          "description": "Used to identify which provider is scraping info"
+        },
+        "base_url": {
+          "type": "string",
+          "title": "The provider base url",
+          "description": "The base url used for all provider queries when a relative url is specified"
+        },
+        "results_parser": {
+          "type": "object",
+          "title": "The results parser object",
+          "description": "The mandatory parser for parsing data",
+          "properties": {
+            "url": {
+              "type": "string",
+              "title": "The parser url",
+              "description": "The url of the content to be scraped"
+            },
+            "type": {
+              "type": "string",
+              "title": "The type of the parser",
+              "description": "Tells the parser how to interpret rows and data items",
+              "enum": [
+                "html",
+                "json",
+                "xml"
+              ],
+              "default": "html"
+            },
+            "rows": {
+              "type": "string",
+              "title": "The rows definition for this parser",
+              "description": "The rows xpath (must be iterable) definition for the parser."
+            },
+            "data": {
+              "type": "object",
+              "allOf": [
+                {
+                  "type": "string",
+                  "title": "The data item",
+                  "description": "Data item xpath so it can be used later. Required items are 'title' and 'magnet'. Optional items are: 'seeds', 'leeches' and 'size' (other items can be added, so they can be used on mutate)."
+                }
+              ]
+            },
+            "mutate": {
+              "type": "object",
+              "allOf": [
+                {
+                  "type": "string",
+                  "title": "The data item to mutate",
+                  "description": "Used to combine/modify/create items after data items were parsed",
+                  "examples": [
+                    "magnet:?xt=urn:btih:{hash}"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "url",
+            "rows",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        "additional_parsers": {
+          "type": "array",
+          "title": "The additional parsers definition",
+          "description": "The list containing all additional parsers of the provider",
+          "items": [
+            {
+              "type": "object",
+              "title": "The results additional parser object",
+              "description": "The additional parser for parsing extra data. Useful when the info can't be retrieved on a single parse (using the results_parser)",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "title": "The additional parser url",
+                  "description": "The url of the content to be scraped"
+                },
+                "data": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "type": "string",
+                      "title": "The data item",
+                      "description": "Data item xpath so it can be used later. Required items are 'title' and 'magnet'. Optional items are: 'seeds', 'leeches' and 'size' (other items can be added, so they can be used on mutate)."
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "keywords": {
+          "type": "object",
+          "title": "The keywords definition",
+          "description": "Keywords used for performing queries",
+          "properties": {
+            "movie": {
+              "type": "string",
+              "title": "The movie query string",
+              "description": "The movie format string used to perform queries. Attributes allowed are: {title}, {tmdb_id}, {year} and {title.<country>}",
+              "examples": [
+                "{title} {year}"
+              ]
+            },
+            "show": {
+              "type": "string",
+              "title": "The show query string",
+              "description": "The show format string used to perform queries. Attributes allowed are: {title}, {tmdb_id}, {year} and {title.<country>}",
+              "examples": [
+                "{title}"
+              ]
+            },
+            "season": {
+              "type": "string",
+              "title": "The season query string",
+              "description": "The season format string used to perform queries. Attributes allowed are: {title}, {tmdb_id}, {season} and {title.<country>}",
+              "examples": [
+                "{title} S{season:02}"
+              ]
+            },
+            "episode": {
+              "type": "string",
+              "title": "The episode query string",
+              "description": "The episode format string used to perform queries. Attributes allowed are: {title}, {tmdb_id}, {season}, {episode} and {title.<country>}",
+              "examples": [
+                "{title} S{season:02}E{episode:02}"
+              ]
+            }
+          },
+          "required": [
+            "movie",
+            "show",
+            "episode",
+            "season"
+          ],
+          "additionalProperties": true
+        },
+        "attributes": {
+          "type": "object",
+          "title": "The provider attributes",
+          "description": "Attributes used to customize the provider (i.e, color, icon, etc)",
+          "properties": {
+            "color": {
+              "type": "string",
+              "title": "The provider color",
+              "description": "The provider RGB color",
+              "examples": [
+                "FF6AC045"
+              ]
+            },
+            "icon": {
+              "type": "string",
+              "title": "The provider icon path",
+              "description": "The provider icon relative path",
+              "examples": [
+                "provider_icons/icon.png"
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "name",
+        "base_url",
+        "results_parser"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}
+
