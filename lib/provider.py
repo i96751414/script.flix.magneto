@@ -71,7 +71,7 @@ class Result(object):
         if self._seeds and self._leeches:
             label.append("({}/{}) ".format(self.seeds, self.leeches))
         if self._size is not None:
-            label.append(bold("[{}]".format(self._size)))
+            label.append(bold("[{}]".format(sizeof(int(self._size)))))
         for field in (self._release, self._video_codec, self._audio_codec):
             if field is not Unknown:
                 label.append(field.name)
