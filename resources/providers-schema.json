@@ -28,7 +28,10 @@
               "rows": {
                 "type": "string",
                 "title": "The rows definition for this parser",
-                "description": "The rows xpath (must be iterable) definition for the parser."
+                "description": "The rows xpath (must be iterable) definition for the parser.",
+                "examples": [
+                  ".//items"
+                ]
               }
             },
             "required": [
@@ -41,7 +44,7 @@
       "additional_parsers": {
         "type": "array",
         "title": "The additional parsers definition",
-        "description": "The list containing all additional parsers of the provider",
+        "description": "The list containing all additional parsers of the provider. Useful when the info can't be retrieved on a single parse (using the results_parser).",
         "items": {
           "$ref": "#/definitions/parser",
           "title": "The results additional parser object",
@@ -130,8 +133,6 @@
   "definitions": {
     "parser": {
       "type": "object",
-      "title": "The results additional parser object",
-      "description": "The additional parser for parsing extra data. Useful when the info can't be retrieved on a single parse (using the results_parser)",
       "properties": {
         "url": {
           "type": "string",
@@ -151,18 +152,25 @@
         },
         "data": {
           "type": "object",
+          "title": "The data object",
+          "description": "Object containing all data items to be parsed. Required items are 'title' and 'magnet'. Optional items are: 'seeds', 'leeches' and 'size' (other items can be added, so they can be used on mutate).",
           "additionalProperties": {
             "type": "string",
             "title": "The data item",
-            "description": "Data item xpath so it can be used later. Required items are 'title' and 'magnet'. Optional items are: 'seeds', 'leeches' and 'size' (other items can be added, so they can be used on mutate)."
+            "description": "Data item xpath so it can be used later.",
+            "examples": [
+              "./size/text()"
+            ]
           }
         },
         "mutate": {
           "type": "object",
+          "title": "The mutate object",
+          "description": "Object to combine/modify/create items after data items were parsed",
           "additionalProperties": {
             "type": "string",
             "title": "The data item to mutate",
-            "description": "Used to combine/modify/create items after data items were parsed",
+            "description": "The data item to mutate. It can depend on any other data items.",
             "examples": [
               "magnet:?xt=urn:btih:{hash}"
             ]
