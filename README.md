@@ -1,7 +1,7 @@
 # script.flix.magneto
 
 A [Flix](https://github.com/i96751414/plugin.video.flix) provider which uses [Torrest](https://github.com/i96751414/plugin.video.torrest) as backend for playing magnets.
-It consists of a very clean implementation of an abstract scraper which is intended to work against many sites as possible.
+It consists of a very clean implementation of an abstract scraper which is intended to work against as many sites as possible.
 
 ## Features
 
@@ -46,6 +46,8 @@ This section describes the supported conversions/formats.
 
 ### using an additional parser
 
+Additional parsers are optional parsers which are run after the main parser (`results_parser`) has run. These don't have the `rows` definition as it can only be defined once.
+
 ```json
 [
   {
@@ -86,6 +88,8 @@ This section describes the supported conversions/formats.
 
 ### using a json parser
 
+One can parse json data by setting `results_parser.type` as `json`.
+
 ```json
 [
   {
@@ -119,7 +123,7 @@ This section describes the supported conversions/formats.
 
 ### mutating data
 
-In the below example, `size` is first parsed by the `results_parser` and then it is converted to a human readable size (note `"{size!b}`)
+In the below example, `size` is first parsed by the `results_parser.data` and then it is converted to a human readable size by `results_parser.mutate` (note `"{size!b}`).
 
 ```json
 [
