@@ -172,7 +172,8 @@
             "title": "The data item to mutate",
             "description": "The data item to mutate. It can depend on any other data items.",
             "examples": [
-              "magnet:?xt=urn:btih:{hash}"
+              "magnet:?xt=urn:btih:{hash}",
+              "{size!b}"
             ]
           }
         }
