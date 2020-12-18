@@ -5,7 +5,7 @@ try:
 except ImportError:
     from urllib.parse import quote_plus
 
-from flix.kodi import ADDON_PATH, get_boolean_setting
+from flix.kodi import ADDON_PATH, get_boolean_setting, get_int_setting
 from flix.provider import Provider, ProviderResult
 from lib.filters import Unknown, Resolution, ReleaseType, SceneTags, VideoCodec, AudioCodec
 from lib.scraper import Scraper, ScraperRunner
@@ -96,7 +96,8 @@ class Result(object):
 
 def perform_search(search_type, data, num_threads=10):
     results = {}
-    scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"))
+    scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
+                                                timeout=get_int_setting("scraper_timeout"))
                 if get_boolean_setting(s.id)]
     with ScraperRunner(scrapers, num_threads=num_threads) as runner:
         runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)

@@ -105,19 +105,20 @@ class Scraper(object):
                    "Chrome/81.0.4044.113 Safari/537.36")
 
     @staticmethod
-    def get_scrapers(path):
+    def get_scrapers(path, timeout=None):
         with open(path) as f:
-            return [Scraper.from_data(data) for data in json.load(f)]
+            return [Scraper.from_data(data, timeout=timeout) for data in json.load(f)]
 
     @staticmethod
-    def from_data(data):
+    def from_data(data, timeout=None):
         return Scraper(
             data["name"], data["base_url"], ResultsParser(**data["results_parser"]),
             additional_parsers=[Parser(**d) for d in data.get("additional_parsers", [])],
-            keywords=data.get("keywords"), attributes=data.get("attributes"))
+            keywords=data.get("keywords"), attributes=data.get("attributes"), timeout=timeout)
 
-    def __init__(self, name, base_url, results_parser, additional_parsers=None, keywords=None, attributes=None):
-        # type:(str,str,ResultsParser,List[Parser], Dict[str, str], dict) ->None
+    def __init__(self, name, base_url, results_parser, additional_parsers=None, keywords=None, attributes=None,
+                 timeout=None):
+        # type:(str,str,ResultsParser,List[Parser], Dict[str, str], dict, int) -> None
         self._name = name
         self._base_url = base_url
         self._results_parser = results_parser
@@ -125,6 +126,7 @@ class Scraper(object):
         self._keywords = keywords or {}
         self._attributes = attributes or {}
         self._session = requests.Session()
+        self._timeout = timeout
         self._session.headers = {
             "User-Agent": self._user_agent,
             "Accept-Encoding": "gzip",
@@ -155,7 +157,7 @@ class Scraper(object):
     def _parse_results(self, query):
         url = self._get_url(_formatter.format(self._results_parser.url, query=query))
         logging.debug("Getting results for url %s", url)
-        r = self._session.get(url)
+        r = self._session.get(url, timeout=self._timeout)
         r.raise_for_status()
         return self._results_parser.parse_results(r.content)
 
@@ -163,7 +165,7 @@ class Scraper(object):
         parser, result = data
         url = self._get_url(_formatter.format(parser.url, **result))
         logging.debug("Getting additional results for url %s", url)
-        r = self._session.get(url)
+        r = self._session.get(url, timeout=self._timeout)
         r.raise_for_status()
         parser.update_result(result, r.content)
 

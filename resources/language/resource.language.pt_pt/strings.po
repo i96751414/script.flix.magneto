@@ -25,3 +25,7 @@ msgstr "Geral"
 msgctxt "#30001"
 msgid "Providers"
 msgstr "Provedores"
+
+msgctxt "#30002"
+msgid "Scraper timeout (seconds)"
+msgstr "Tempo limite do scraper (segundos)"

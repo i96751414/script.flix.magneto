@@ -25,3 +25,7 @@ msgstr ""
 msgctxt "#30001"
 msgid "Providers"
 msgstr ""
+
+msgctxt "#30002"
+msgid "Scraper timeout (seconds)"
+msgstr ""

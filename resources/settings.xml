@@ -2,6 +2,7 @@
 <settings>
     <!-- General -->
     <category label="30000">
+        <setting id="scraper_timeout" type="slider" label="30002" option="int" range="10,1,60" default="30"/>
     </category>
     <!-- Providers -->
     <category label="30001">
