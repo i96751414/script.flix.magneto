@@ -76,7 +76,11 @@ class Parser(object):
     def update_result(self, result, content):
         self.clazz(content).update_result(self.data, result)
         for key, value in self.mutate.items():
-            result[key] = _formatter.format(value, **result)
+            self._mutate_result(result, key, value)
+
+    @staticmethod
+    def _mutate_result(result, key, value):
+        result[key] = _formatter.format(value, **result)
 
 
 class ResultsParser(Parser):
@@ -88,7 +92,7 @@ class ResultsParser(Parser):
         results = self.clazz(content).parse_results(self.rows, self.data)
         for key, value in self.mutate.items():
             for result in results:
-                result[key] = _formatter.format(value, **result)
+                self._mutate_result(result, key, value)
         return results
 
 

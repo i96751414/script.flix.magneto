@@ -1,3 +1,4 @@
+import logging
 import os
 
 try:
@@ -103,6 +104,7 @@ def perform_search(search_type, data, num_threads=10):
         runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
 
         for scraper, scraper_results in runner_data:
+            logging.debug("processing %s scraper results", scraper.name)
             for scraper_result in scraper_results:
                 magnet = Magnet(scraper_result["magnet"])
                 try:
@@ -118,6 +120,7 @@ def perform_search(search_type, data, num_threads=10):
                 else:
                     magnet_result.add_result(scraper, scraper_result)
 
+    # noinspection PyTypeChecker
     return [r.to_provider_result() for r in sorted(results.values(), key=Result.get_factor, reverse=True)]
 
 
