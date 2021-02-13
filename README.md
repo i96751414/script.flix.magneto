@@ -1,5 +1,7 @@
 # script.flix.magneto
 
+[![Build Status](https://github.com/i96751414/script.flix.magneto/workflows/build/badge.svg)](https://github.com/i96751414/script.flix.magneto/actions?query=workflow%3Abuild)
+
 A [Flix](https://github.com/i96751414/plugin.video.flix) provider which uses [Torrest](https://github.com/i96751414/plugin.video.torrest) as backend for playing magnets.
 It consists of a very clean implementation of an abstract scraper which is intended to work against as many sites as possible.
 
