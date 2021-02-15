@@ -1,9 +1,10 @@
 import json
 import logging
 import re
-from xml.etree import ElementTree
+from xml.etree.ElementTree import Element, SubElement  # nosec
 
 import htmlement
+from defusedxml import ElementTree
 
 from lib.utils import text
 
@@ -67,7 +68,7 @@ class HTMLParser(ETParser):
 
 
 def create_xml_tree(obj, root_name="root", attribute_type=False):
-    root = ElementTree.Element(root_name)
+    root = Element(root_name)
     _create_xml_tree(root, obj, attribute_type=attribute_type)
     return root
 
@@ -85,14 +86,14 @@ def _create_xml_tree(root, obj, **kwargs):
 
     if isinstance(obj, (tuple, list)):
         for v in obj:
-            _create_xml_tree(ElementTree.SubElement(root, "item"), v, **kwargs)
+            _create_xml_tree(SubElement(root, "item"), v, **kwargs)
     elif isinstance(obj, dict):
         for k, v in obj.items():
             if attribute_type:
                 _kwargs, tag = {"key_type": k.__class__.__name__, "key": tag_str(k)}, "item"
             else:
                 _kwargs, tag = {}, _check_tag(tag_str(k))
-            _create_xml_tree(ElementTree.SubElement(root, tag, **_kwargs), v, **kwargs)
+            _create_xml_tree(SubElement(root, tag, **_kwargs), v, **kwargs)
     else:
         root.text = tag_str(obj)
     if attribute_type:

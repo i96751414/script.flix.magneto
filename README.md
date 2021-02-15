@@ -1,32 +1,36 @@
 # script.flix.magneto
 
 [![Build Status](https://github.com/i96751414/script.flix.magneto/workflows/build/badge.svg)](https://github.com/i96751414/script.flix.magneto/actions?query=workflow%3Abuild)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ffe8ff7028674c2db50a2b3d4de1cebc)](https://www.codacy.com/gh/i96751414/script.flix.magneto/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=i96751414/script.flix.magneto&amp;utm_campaign=Badge_Grade)
 
 A [Flix](https://github.com/i96751414/plugin.video.flix) provider which uses [Torrest](https://github.com/i96751414/plugin.video.torrest) as backend for playing magnets.
 It consists of a very clean implementation of an abstract scraper which is intended to work against as many sites as possible.
 
 ## Features
 
-- Clean code
-- Very easy to add/update scrapers
-- Very fast
-- Intended to be as generic as possible
-- Uses xpath for getting items (even for json APIs)
-- Allows to mutate parsed data, using a custom formatter
+-   Clean code
+-   Very easy to add/update scrapers
+-   Very fast
+-   Intended to be as generic as possible
+-   Uses xpath for getting items (even for json APIs)
+-   Allows to mutate parsed data, using a custom formatter
 
-## How to add a magnet provider?
+## How to add a magnet provider
 
 Adding a provider (scraper) requires 3 simple steps:
-- Add the provider definition in `resources/providers.json` (see [provider-schema.json](resources/providers-schema.json))
-- Add the provider icon in `resources/provider_icons`
-- Add the provider to `resources/settings.xml`:
-  ```xml
-  <setting id="<provider.id>" type="bool" label="<provider.name>" default="<true|false>"/>  
-  ```
-  where:
-  - `provider.id` - The provider name (as specified in `providers.json`) in lower case with all spaces replaced by dots.
-  - `provider.name` - The provider name (as specified in `providers.json`).
-  - The default boolean value specifies if the provider is either enabled (true) or disabled (false) by default.
+
+-   Add the provider definition in `resources/providers.json` (see [provider-schema.json](resources/providers-schema.json))
+
+-   Add the provider icon in `resources/provider_icons`
+
+-   Add the provider to `resources/settings.xml`:
+    ```xml
+    <setting id="<provider.id>" type="bool" label="<provider.name>" default="<true|false>"/>  
+    ```
+    where:
+    -   `provider.id` is the provider name (as specified in `providers.json`) in lower case with all spaces replaced by dots.
+    -   `provider.name` is the provider name (as specified in `providers.json`).
+    -   The default boolean value specifies if the provider is either enabled (true) or disabled (false) by default.
 
 ## Custom formatter
 
