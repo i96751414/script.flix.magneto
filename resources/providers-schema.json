@@ -17,29 +17,8 @@
         "description": "The base url used for all provider queries when a relative url is specified"
       },
       "results_parser": {
-        "title": "The results parser object",
-        "description": "The mandatory parser for parsing data",
-        "allOf": [
-          {
-            "$ref": "#/definitions/parser"
-          },
-          {
-            "properties": {
-              "rows": {
-                "type": "string",
-                "title": "The rows definition for this parser",
-                "description": "The rows xpath (must be iterable) definition for the parser.",
-                "examples": [
-                  ".//items"
-                ]
-              }
-            },
-            "required": [
-              "rows"
-            ],
-            "additionalProperties": false
-          }
-        ]
+        "$ref": "#/definitions/results_parser",
+        "additionalProperties": false
       },
       "additional_parsers": {
         "type": "array",
@@ -48,7 +27,8 @@
         "items": {
           "$ref": "#/definitions/parser",
           "title": "The results additional parser object",
-          "description": "The additional parser for parsing extra data. Useful when the info can't be retrieved on a single parse (using the results_parser)"
+          "description": "The additional parser for parsing extra data. Useful when the info can't be retrieved on a single parse (using the results_parser)",
+          "additionalProperties": false
         }
       },
       "keywords": {
@@ -181,8 +161,31 @@
       "required": [
         "url",
         "data"
-      ],
-      "additionalProperties": false
+      ]
+    },
+    "results_parser": {
+      "title": "The results parser object",
+      "description": "The mandatory parser for parsing data",
+      "allOf": [
+        {
+          "$ref": "#/definitions/parser"
+        },
+        {
+          "properties": {
+            "rows": {
+              "type": "string",
+              "title": "The rows definition for this parser",
+              "description": "The rows xpath (must be iterable) definition for the parser.",
+              "examples": [
+                ".//items"
+              ]
+            }
+          },
+          "required": [
+            "rows"
+          ]
+        }
+      ]
     }
   }
 }
