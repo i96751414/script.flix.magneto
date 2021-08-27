@@ -16,7 +16,7 @@ from lib.utils import Title, Magnet, InvalidMagnet, resolution_colors, colored_t
 class Result(object):
     def __init__(self, scraper, result):
         self._providers = {self._get_scraper_name(scraper)}
-        self._icon = scraper.get_attribute("icon")
+        self._icon = scraper.get_attribute("icon", default=None)
         self._title = result["title"]
         self._magnet = result["magnet"]
         self._seeds = []
