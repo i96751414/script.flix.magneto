@@ -163,3 +163,34 @@ In the below example, `size` is first parsed by the `results_parser.data` and th
   }
 ]
 ```
+
+## Testing the provider
+
+The `provider_test.py` tool was created so developers can test their providers without having to run Kodi.
+In order to run the tool, install the required dependencies:
+
+```shell
+pip3 install requests jsonschema htmlement defusedxml
+```
+
+Then, you can either verify the providers file or test the xpath expression.
+
+### verify
+
+The `verify` command performs some preliminar checks against the providers file:
+-   Validates the providers' schema;
+-   Validates the settings.xml file against the providers.json file;
+-   Analyses the set attributes (icon and color).
+
+```shell
+python3 provider_test.py verify
+```
+
+### xpath
+
+The `xpath` command evaluates the provided xpath against the provided URL contents.
+It supports JSON, XML and HTML (default) content types, and it can be run as a single xpath or as a list of xpaths (by using `--row` option).
+
+```shell
+python3 provider_test.py xpath --rows ".//tbody/tr" "./td[2]/a[1]/@title" "https://www.foobar.com/?q=baz"
+```
