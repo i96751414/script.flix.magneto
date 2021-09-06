@@ -18,7 +18,7 @@ ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_PATH = os.path.join(ROOT_PATH, "resources")
 PROVIDERS_PATH = os.path.join(RESOURCES_PATH, "providers.json")
 SETTINGS_PATH = os.path.join(RESOURCES_PATH, "settings.xml")
-PROVIDERS_SCHEMA_PATH = os.path.join(RESOURCES_PATH, "providers-schema.json")
+PROVIDERS_SCHEMA_PATH = os.path.join(RESOURCES_PATH, "providers.schema.json")
 
 COLOR_REGEX = re.compile(r"^[0-9A-Fa-f]{8}$")
 
