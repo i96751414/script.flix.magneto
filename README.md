@@ -52,11 +52,27 @@ This section describes the supported conversions/formats.
 |`{<field>:q}`|Quotes the specified `<field>`|
 |`{<field>:q<letter>}`|Quotes the specified `<field>`, replacing all spaces with the specified letter (i.e. `{url:q+}`)|
 
+Python default conversions/formats are also supported.
+See [custom string formatting](https://docs.python.org/3/library/string.html#custom-string-formatting).
+
 ### Accessing alternative titles
 
 By default, one can access the movie/show title by using `{title}`. However, alternative titles can also be used by
 accessing the ISO 3166-1 lowercase country code (e.g: `{title.us}`). If such title does not exist, the original title
 is used. One can also access the current country code with `{title.auto}`.
+
+### Fields available
+
+The following table describes the fields available when building keywords and also the media types where these fields
+may be used.
+
+|Field|Description|Movie|Show|Season|Episode|
+|-----|-----------|-----|----|------|-------|
+|`{tmdb_id}`|The TMDB identifier|X|X|X|X|
+|`{title}`|The title as specified in the section above|X|X|X|X|
+|`{year}`|The release year (optional)|X|X| | |
+|`{season}`|The season number| | |X|X|
+|`{episode}`|The episode number| | | |X|
 
 ## Examples
 
@@ -206,4 +222,17 @@ default) content types, and it can be run as a single xpath or as a list of xpat
 
 ```shell
 python3 provider_test.py xpath --rows ".//tbody/tr" "./td[2]/a[1]/@title" "https://www.foobar.com/?q=baz"
+```
+
+### parse
+
+The `parse` command allows to emulate a real search, using real providers. Depending on the search type, additional 
+arguments may be required.
+
+#### query
+
+The `query` search type is the simplest one. It is a raw search and thus it does not require any additional arguments.
+
+```shell
+python3 provider_test.py parse query "big buck bunny"
 ```

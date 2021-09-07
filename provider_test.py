@@ -12,7 +12,7 @@ import jsonschema
 import requests
 
 from lib.parsers import XMLParser, JSONParser, HTMLParser
-from lib.scraper import Scraper
+from lib.scraper import Scraper, ScraperRunner
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_PATH = os.path.join(ROOT_PATH, "resources")
@@ -100,12 +100,37 @@ def xpath(args):
         logging.info(parser._xpath_element(parser._root, args.xpath))
 
 
+def get_scrapers(args):
+    return [s for s in Scraper.get_scrapers(args.providers_path) if not args.provider_id or args.provider_id == s.id]
+
+
+def print_results(scraper_name, results):
+    for result in results:
+        title = result["title"]
+        seeds = result.get("seeds")
+        leeches = result.get("leeches")
+        size = result.get("size")
+
+        if seeds and leeches:
+            title += " | S:{}/L:{}".format(seeds, leeches)
+        if size:
+            title += " | {}".format(size)
+        title += " | {}".format(scraper_name)
+
+        print("+ {}\n{}\n".format(title, result["magnet"]))
+
+
+def parse_query(args):
+    with ScraperRunner(get_scrapers(args)) as runner:
+        for scraper, results in runner.parse_query(args.search):
+            print_results(scraper.name, results)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tool to test and verify script.flix.magneto providers")
     subparsers = parser.add_subparsers(title="command", dest="command", required=True, help="Command to execute")
 
     parser_verify = subparsers.add_parser("verify", help="Verifies the providers.json file")
-    parser_verify.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser_verify.add_argument("-p", "--providers-path", type=str, default=PROVIDERS_PATH,
                                help="The providers.json path (default: {})".format(PROVIDERS_PATH))
     parser_verify.add_argument("-s", "--settings-path", type=str, default=SETTINGS_PATH,
@@ -115,7 +140,6 @@ def main():
     parser_verify.set_defaults(func=verify_and_print)
 
     parser_xpath = subparsers.add_parser("xpath", help="Gets the result of the xpath expression")
-    parser_xpath.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser_xpath_type = parser_xpath.add_mutually_exclusive_group()
     parser_xpath_type.add_argument("--xml", action="store_const", const=XMLParser, dest="parser",
                                    help="Use the XML parser")
@@ -125,8 +149,23 @@ def main():
                                    help="Use the HTML parser (default)")
     parser_xpath.add_argument("-r", "--rows", type=str, help="Rows xpath (for multiple evaluation)")
     parser_xpath.add_argument("xpath", type=str, help="The xpath expression")
-    parser_xpath.add_argument("url", type=str, help="The enum argumenturl where to perform the xpath")
+    parser_xpath.add_argument("url", type=str, help="The url where to perform the xpath")
     parser_xpath.set_defaults(func=xpath, parser=HTMLParser)
+
+    parser_parse = subparsers.add_parser("parse", help="Runs the specified parser and lists the results")
+    parsers = parser_parse.add_subparsers(title="parser", dest="parser", description="The parser to execute",
+                                          required=True)
+    query_parser = parsers.add_parser("query", help="Parses the results for the provided query")
+    query_parser.add_argument("search", help="The search query")
+    query_parser.set_defaults(func=parse_query)
+
+    for p in (query_parser,):
+        p.add_argument("-i", "--provider-id", type=str, help="The provider identifier")
+        p.add_argument("-p", "--providers-path", type=str, default=PROVIDERS_PATH,
+                       help="The providers.json path (default: {})".format(PROVIDERS_PATH))
+
+    for p in (parser_verify, parser_xpath, query_parser):
+        p.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
     logger = logging.getLogger()
