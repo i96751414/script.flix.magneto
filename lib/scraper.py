@@ -220,13 +220,17 @@ class ScraperRunner(object):
 
 
 def generate_settings(path, enabled_count=-1):
-    scrapers = Scraper.get_scrapers(path)
-    for i, scraper in enumerate(scrapers):
-        default = "false" if 0 <= enabled_count <= i else "true"
-        print('<setting id="{}" type="bool" label="{}" default="{}"/>'.format(scraper.id, scraper.name, default))
-
-
-def main():
-    import os
-    path = os.path.join(os.path.dirname(__file__), "..", "resources", "providers.json")
-    generate_settings(path, enabled_count=5)
+    return """\
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <!-- General -->
+    <category label="30000">
+        <setting id="scraper_timeout" type="slider" label="30002" option="int" range="10,1,60" default="30"/>
+    </category>
+    <!-- Providers -->
+    <category label="30001">{}
+    </category>
+</settings>""".format(
+        "".join('\n{}<setting id="{}" type="bool" label="{}" default="{}"/>'.format(
+            " " * 4 * 2, scraper.id, scraper.name, "false" if 0 <= enabled_count <= i else "true")
+                for i, scraper in enumerate(Scraper.get_scrapers(path))))

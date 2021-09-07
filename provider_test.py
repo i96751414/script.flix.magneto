@@ -12,7 +12,7 @@ import jsonschema
 import requests
 
 from lib.parsers import XMLParser, JSONParser, HTMLParser
-from lib.scraper import Scraper, ScraperRunner
+from lib.scraper import Scraper, ScraperRunner, generate_settings
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_PATH = os.path.join(ROOT_PATH, "resources")
@@ -120,6 +120,11 @@ def print_results(scraper_name, results):
         print("+ {}\n{}\n".format(title, result["magnet"]))
 
 
+def generate_settings_and_save(args):
+    with open(args.settings_path, "w") as f:
+        f.write(generate_settings(args.providers_path, enabled_count=args.enabled_count))
+
+
 def parse_query(args):
     with ScraperRunner(get_scrapers(args)) as runner:
         for scraper, results in runner.parse_query(args.search):
@@ -131,10 +136,6 @@ def main():
     subparsers = parser.add_subparsers(title="command", dest="command", required=True, help="Command to execute")
 
     parser_verify = subparsers.add_parser("verify", help="Verifies the providers.json file")
-    parser_verify.add_argument("-p", "--providers-path", type=str, default=PROVIDERS_PATH,
-                               help="The providers.json path (default: {})".format(PROVIDERS_PATH))
-    parser_verify.add_argument("-s", "--settings-path", type=str, default=SETTINGS_PATH,
-                               help="The addon settings.xml path (default: {})".format(SETTINGS_PATH))
     parser_verify.add_argument("-S", "--schema-path", type=str, default=PROVIDERS_SCHEMA_PATH,
                                help="The json schema path (default: {})".format(PROVIDERS_SCHEMA_PATH))
     parser_verify.set_defaults(func=verify_and_print)
@@ -152,6 +153,11 @@ def main():
     parser_xpath.add_argument("url", type=str, help="The url where to perform the xpath")
     parser_xpath.set_defaults(func=xpath, parser=HTMLParser)
 
+    parser_generate_settings = subparsers.add_parser("generate-settings", help="Generates the settings.xml file")
+    parser_generate_settings.add_argument("-e", "--enabled-count", type=int, default=-1,
+                                          help="The number of enabled providers by default")
+    parser_generate_settings.set_defaults(func=generate_settings_and_save)
+
     parser_parse = subparsers.add_parser("parse", help="Runs the specified parser and lists the results")
     parsers = parser_parse.add_subparsers(title="parser", dest="parser", description="The parser to execute",
                                           required=True)
@@ -159,12 +165,18 @@ def main():
     query_parser.add_argument("search", help="The search query")
     query_parser.set_defaults(func=parse_query)
 
-    for p in (query_parser,):
-        p.add_argument("-i", "--provider-id", type=str, help="The provider identifier")
+    for p in (parser_verify, parser_generate_settings):
+        p.add_argument("-s", "--settings-path", type=str, default=SETTINGS_PATH,
+                       help="The addon settings.xml path (default: {})".format(SETTINGS_PATH))
+
+    for p in (parser_verify, parser_generate_settings, query_parser):
         p.add_argument("-p", "--providers-path", type=str, default=PROVIDERS_PATH,
                        help="The providers.json path (default: {})".format(PROVIDERS_PATH))
 
-    for p in (parser_verify, parser_xpath, query_parser):
+    for p in (query_parser,):
+        p.add_argument("-i", "--provider-id", type=str, help="The provider identifier")
+
+    for p in (parser_verify, parser_xpath, parser_generate_settings, query_parser):
         p.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()

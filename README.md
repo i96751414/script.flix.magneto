@@ -15,7 +15,7 @@ clean implementation of an abstract scraper which is intended to work against as
 -   Intended to be as generic as possible
 -   Uses xpath for getting items (even for json APIs)
 -   Allows to mutate parsed data, using a custom formatter
--  Possible to test the providers using `provider_test.py` script
+-   Possible to test the providers using `provider_test.py` script
 
 ## How to add a magnet provider
 
@@ -33,7 +33,9 @@ Adding a provider (scraper) requires 3 simple steps:
     where:
     -   `provider.id` is the provider name (as specified in `providers.json`) in lower case with all spaces replaced by
         dots.
+
     -   `provider.name` is the provider name (as specified in `providers.json`).
+  
     -   The default boolean value specifies if the provider is either enabled (true) or disabled (false) by default.
 
 ## Custom formatter
@@ -201,7 +203,8 @@ run the tool, install the required dependencies:
 pip3 install requests jsonschema htmlement defusedxml
 ```
 
-Then, you can either verify the providers file or test the xpath expression.
+Then, you can either verify the providers file, test the xpath expression, generate the `settings.xml` file for Kodi or
+run the providers (parse) against the provided query/search parameters.
 
 ### verify
 
@@ -222,6 +225,15 @@ default) content types, and it can be run as a single xpath or as a list of xpat
 
 ```shell
 python3 provider_test.py xpath --rows ".//tbody/tr" "./td[2]/a[1]/@title" "https://www.foobar.com/?q=baz"
+```
+
+### generate-settings
+
+The `generate-settings` command automatically generates a `settings.xml` file suitable for Kodi. By default, this file
+is located under `resources/settings.xml`.
+
+```shell
+python3 provider_test.py generate-settings
 ```
 
 ### parse
