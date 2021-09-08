@@ -131,6 +131,12 @@ def parse_query(args):
             print_results(scraper.name, results)
 
 
+def parse_media(args):
+    with ScraperRunner(get_scrapers(args)) as runner:
+        for scraper, results in runner.parse(args.parser, {f: getattr(args, f) or "" for f in args.fields}):
+            print_results(scraper.name, results)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tool to test and verify script.flix.magneto providers")
     subparsers = parser.add_subparsers(title="command", dest="command", required=True, help="Command to execute")
@@ -164,19 +170,41 @@ def main():
     query_parser = parsers.add_parser("query", help="Parses the results for the provided query")
     query_parser.add_argument("search", help="The search query")
     query_parser.set_defaults(func=parse_query)
+    movie_parser = parsers.add_parser("movie", help="Parses the results for the provided movie")
+    movie_parser.set_defaults(func=parse_media, fields=("tmdb_id", "title", "year"))
+    show_parser = parsers.add_parser("show", help="Parses the results for the provided show")
+    show_parser.set_defaults(func=parse_media, fields=("tmdb_id", "title", "year"))
+    season_parser = parsers.add_parser("season", help="Parses the results for the provided season")
+    season_parser.set_defaults(func=parse_media, fields=("tmdb_id", "title", "season"))
+    episode_parser = parsers.add_parser("episode", help="Parses the results for the provided episode")
+    episode_parser.set_defaults(func=parse_media, fields=("tmdb_id", "title", "season", "episode"))
+
+    for p in (movie_parser, show_parser, season_parser, episode_parser):
+        p.add_argument("--tmdb-id", type=str, help="The TMDB identifier")
+        p.add_argument("--title", type=str, required=True, help="The media title")
+
+    for p in (movie_parser, show_parser):
+        p.add_argument("--year", type=int, help="The year of the release")
+
+    for p in (season_parser, episode_parser):
+        p.add_argument("--season", type=int, required=True, help="The season number")
+
+    episode_parser.add_argument("--episode", type=int, required=True, help="The episode number")
 
     for p in (parser_verify, parser_generate_settings):
         p.add_argument("-s", "--settings-path", type=str, default=SETTINGS_PATH,
                        help="The addon settings.xml path (default: {})".format(SETTINGS_PATH))
 
-    for p in (parser_verify, parser_generate_settings, query_parser):
+    for p in (parser_verify, parser_generate_settings, query_parser,
+              movie_parser, show_parser, season_parser, episode_parser):
         p.add_argument("-p", "--providers-path", type=str, default=PROVIDERS_PATH,
                        help="The providers.json path (default: {})".format(PROVIDERS_PATH))
 
-    for p in (query_parser,):
+    for p in (query_parser, movie_parser, show_parser, season_parser, episode_parser):
         p.add_argument("-i", "--provider-id", type=str, help="The provider identifier")
 
-    for p in (parser_verify, parser_xpath, parser_generate_settings, query_parser):
+    for p in (parser_verify, parser_xpath, parser_generate_settings, query_parser,
+              movie_parser, show_parser, season_parser, episode_parser):
         p.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
