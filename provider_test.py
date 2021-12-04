@@ -6,12 +6,13 @@ import logging
 import os
 import re
 import sys
+from xml.dom import minidom
 from xml.etree import ElementTree  # nosec
 
 import jsonschema
 import requests
 
-from lib.parsers import XMLParser, JSONParser, HTMLParser
+from lib.parsers import XMLParser, JSONParser, HTMLParser, create_xml_tree
 from lib.scraper import Scraper, ScraperRunner, generate_settings
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -137,6 +138,16 @@ def parse_media(args):
             print_results(scraper.name, results)
 
 
+def convert_json_to_xml(args):
+    if re.match("https?://", args.path):
+        data = requests.get(args.path).content
+    else:
+        with open(args.path, "rb") as f:
+            data = f.read()
+
+    print(minidom.parseString(ElementTree.tostring(create_xml_tree(json.loads(data)))).toprettyxml(indent=" " * 4))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tool to test and verify script.flix.magneto providers")
     subparsers = parser.add_subparsers(title="command", dest="command", required=True, help="Command to execute")
@@ -179,6 +190,10 @@ def main():
     episode_parser = parsers.add_parser("episode", help="Parses the results for the provided episode")
     episode_parser.set_defaults(func=parse_media, fields=("tmdb_id", "title", "season", "episode"))
 
+    parser_json2xml = subparsers.add_parser("json2xml", help="Converts a json to XML")
+    parser_json2xml.add_argument("path", help="The JSON file path/url")
+    parser_json2xml.set_defaults(func=convert_json_to_xml)
+
     for p in (movie_parser, show_parser, season_parser, episode_parser):
         p.add_argument("--tmdb-id", type=str, help="The TMDB identifier")
         p.add_argument("--title", type=str, required=True, help="The media title")
@@ -204,7 +219,7 @@ def main():
         p.add_argument("-i", "--provider-id", type=str, help="The provider identifier")
 
     for p in (parser_verify, parser_xpath, parser_generate_settings, query_parser,
-              movie_parser, show_parser, season_parser, episode_parser):
+              movie_parser, show_parser, season_parser, episode_parser, parser_json2xml):
         p.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()

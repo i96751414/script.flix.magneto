@@ -282,3 +282,11 @@ The `episode` search type gathers information for the provided show, season and 
 ```shell
 python3 provider_test.py parse episode --tmdb-id 1668 --title "Friends" --season 1 --episode 1
 ```
+
+### json2xml
+
+The `json2xml` command allows to convert a JSON file to XML. This is useful when using JSON APIs and xpath.
+
+```shell
+python3 provider_test.py json2xml resources/providers.schema.json
+```
