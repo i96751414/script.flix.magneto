@@ -6,11 +6,10 @@ import logging
 import os
 import re
 import sys
-from xml.dom import minidom
-from xml.etree import ElementTree  # nosec
 
 import jsonschema
 import requests
+from defusedxml import ElementTree, minidom
 
 from lib.parsers import XMLParser, JSONParser, HTMLParser, create_xml_tree
 from lib.scraper import Scraper, ScraperRunner, generate_settings
@@ -39,7 +38,7 @@ def verify(providers_path, schema_path, settings_path):
 
     jsonschema.validate(data, schema)
 
-    settings = ElementTree.parse(settings_path)  # nosec
+    settings = ElementTree.parse(settings_path)
     providers_root = os.path.dirname(providers_path)
 
     for provider in data:
