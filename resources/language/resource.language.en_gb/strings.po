@@ -29,3 +29,12 @@ msgstr ""
 msgctxt "#30002"
 msgid "Scraper timeout (seconds)"
 msgstr ""
+
+msgctxt "#30003"
+msgid "Enable background dialog"
+msgstr ""
+
+# Script
+msgctxt "#30100"
+msgid "Processing"
+msgstr ""

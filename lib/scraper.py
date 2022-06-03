@@ -108,21 +108,21 @@ class Scraper(object):
                    "AppleWebKit/537.36 (KHTML, like Gecko) "
                    "Chrome/81.0.4044.113 Safari/537.36")
 
-    @staticmethod
-    def get_scrapers(path, timeout=None):
+    @classmethod
+    def get_scrapers(cls, path, timeout=None):
         with open(path) as f:
-            return [Scraper.from_data(data, timeout=timeout) for data in json.load(f)]
+            return [cls.from_data(data, timeout=timeout) for data in json.load(f)]
 
-    @staticmethod
-    def from_data(data, timeout=None):
-        return Scraper(
+    @classmethod
+    def from_data(cls, data, timeout=None):
+        return cls(
             data["name"], data["base_url"], ResultsParser(**data["results_parser"]),
             additional_parsers=[Parser(**d) for d in data.get("additional_parsers", [])],
             keywords=data.get("keywords"), attributes=data.get("attributes"), timeout=timeout)
 
     def __init__(self, name, base_url, results_parser, additional_parsers=None, keywords=None, attributes=None,
                  timeout=None):
-        # type:(str,str,ResultsParser,List[Parser], Dict[str, str], dict, int) -> None
+        # type: (str, str, ResultsParser, List[Parser], Dict[str, str], dict, int) -> None
         self._name = name
         self._base_url = base_url
         self._results_parser = results_parser
@@ -192,21 +192,24 @@ class ScraperRunner(object):
         self._scrapers = scrapers
         self._pool = ThreadPoolExecutor(num_threads)
 
-    def __getattr__(self, item):
-        if item not in ("parse", "parse_query"):
-            raise ValueError("item must be one of parse/parse_query")
+    def parse(self, *args, **kwargs):
+        return self._run_scrapers(Scraper.parse, *args, **kwargs)
 
-        def wrapper(*args, **kwargs):
-            kwargs["pool"] = self._pool
-            results = [(scraper, self._pool.submit(getattr(scraper, item), *args, **kwargs))
-                       for scraper in self._scrapers]
-            for scraper, scraper_results in results:
-                try:
-                    yield scraper, scraper_results.result()
-                except Exception as e:
-                    logging.error("Failed running scraper %s: %s", scraper.name, e)
+    def parse_query(self, *args, **kwargs):
+        return self._run_scrapers(Scraper.parse_query, *args, **kwargs)
 
-        return wrapper
+    def _run_scrapers(self, method, *args, **kwargs):
+        results = [(scraper, self._pool.submit(method, scraper, *args, pool=self._pool, **kwargs))
+                   for scraper in self._scrapers]
+        for scraper, scraper_results in results:
+            try:
+                self.before_result(scraper)
+                yield scraper, scraper_results.result()
+            except Exception as e:
+                logging.error("Failed running scraper %s: %s", scraper.name, e)
+
+    def before_result(self, scraper):
+        pass
 
     def close(self):
         self._pool.shutdown()
@@ -226,6 +229,7 @@ def generate_settings(path, enabled_count=-1):
     <!-- General -->
     <category label="30000">
         <setting id="scraper_timeout" type="slider" label="30002" option="int" range="10,1,60" default="30"/>
+        <setting id="enable_bg_dialog" type="bool" label="30003" default="true"/>
     </category>
     <!-- Providers -->
     <category label="30001">{}

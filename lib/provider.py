@@ -6,7 +6,9 @@ try:
 except ImportError:
     from urllib.parse import quote_plus
 
-from flix.kodi import ADDON_PATH, get_boolean_setting, get_int_setting
+from xbmcgui import DialogProgressBG
+
+from flix.kodi import ADDON_PATH, ADDON_NAME, get_boolean_setting, get_int_setting, translate
 from flix.provider import Provider, ProviderResult
 from lib.filters import Unknown, Resolution, ReleaseType, SceneTags, VideoCodec, AudioCodec
 from lib.scraper import Scraper, ScraperRunner
@@ -100,11 +102,17 @@ def perform_search(search_type, data, num_threads=10):
     scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
                                                 timeout=get_int_setting("scraper_timeout"))
                 if get_boolean_setting(s.id)]
-    with ScraperRunner(scrapers, num_threads=num_threads) as runner:
+
+    if not scrapers:
+        logging.warning("No scrapers configured/enabled")
+        return None
+
+    runner_class = ProgressScraperRunner if get_boolean_setting("enable_bg_dialog") else ScraperRunner
+    with runner_class(scrapers, num_threads=num_threads) as runner:
         runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
 
         for scraper, scraper_results in runner_data:
-            logging.debug("processing %s scraper results", scraper.name)
+            logging.debug("Processing %s scraper results", scraper.name)
             for scraper_result in scraper_results:
                 magnet = Magnet(scraper_result["magnet"])
                 try:
@@ -122,6 +130,26 @@ def perform_search(search_type, data, num_threads=10):
 
     # noinspection PyTypeChecker
     return [r.to_provider_result() for r in sorted(results.values(), key=Result.get_factor, reverse=True)]
+
+
+class ProgressScraperRunner(ScraperRunner):
+    def __init__(self, scrapers, num_threads=10):
+        super(ProgressScraperRunner, self).__init__(scrapers, num_threads=num_threads)
+        self._progress = DialogProgressBG()
+        self._index = 0
+        self._total = len(scrapers)
+        self._message = translate(30100)
+        self._progress.create(ADDON_NAME, message=self._message)
+
+    def before_result(self, scraper):
+        self._progress.update(self._index * 100 // self._total, message=self._message + ": " + scraper.name)
+        self._index += 1
+
+    def close(self):
+        super(ProgressScraperRunner, self).close()
+        if self._progress is not None:
+            self._progress.close()
+            self._progress = None
 
 
 class MagnetoProvider(Provider):

@@ -29,3 +29,12 @@ msgstr "Provedores"
 msgctxt "#30002"
 msgid "Scraper timeout (seconds)"
 msgstr "Tempo limite do scraper (segundos)"
+
+msgctxt "#30003"
+msgid "Enable background dialog"
+msgstr "Ativar caixa de diálogo em segundo plano"
+
+# Script
+msgctxt "#30100"
+msgid "Processing"
+msgstr "Processando"
