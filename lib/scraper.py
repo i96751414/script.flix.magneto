@@ -106,7 +106,7 @@ class Scraper(object):
     _spaces_re = re.compile(r"\s+")
     _user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/81.0.4044.113 Safari/537.36")
+                   "Chrome/102.0.5005.63 Safari/537.36")
 
     @classmethod
     def get_scrapers(cls, path, timeout=None):
@@ -229,6 +229,7 @@ def generate_settings(path, enabled_count=-1):
     <!-- General -->
     <category label="30000">
         <setting id="scraper_timeout" type="slider" label="30002" option="int" range="10,1,60" default="30"/>
+        <setting id="thread_number" type="slider" label="30004" option="int" range="1,1,50" default="10"/>
         <setting id="enable_bg_dialog" type="bool" label="30003" default="true"/>
     </category>
     <!-- Providers -->

@@ -97,7 +97,7 @@ class Result(object):
         return max(seeds * seeds_factor + leeches * leeches_factor, 1) * resolution
 
 
-def perform_search(search_type, data, num_threads=10):
+def perform_search(search_type, data):
     results = {}
     scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
                                                 timeout=get_int_setting("scraper_timeout"))
@@ -108,7 +108,7 @@ def perform_search(search_type, data, num_threads=10):
         return None
 
     runner_class = ProgressScraperRunner if get_boolean_setting("enable_bg_dialog") else ScraperRunner
-    with runner_class(scrapers, num_threads=num_threads) as runner:
+    with runner_class(scrapers, num_threads=get_int_setting("thread_number")) as runner:
         runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
 
         for scraper, scraper_results in runner_data:

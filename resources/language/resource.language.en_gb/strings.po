@@ -34,6 +34,10 @@ msgctxt "#30003"
 msgid "Enable background dialog"
 msgstr ""
 
+msgctxt "#30004"
+msgid "Threads number"
+msgstr ""
+
 # Script
 msgctxt "#30100"
 msgid "Processing"
