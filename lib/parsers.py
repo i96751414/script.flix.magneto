@@ -12,6 +12,7 @@ from lib.utils import text
 class ETParser(object):
     _attr_re = re.compile(r"^(.+)/@([a-zA-Z0-9_ ]+)$")
     _text_re = re.compile(r"^(.+)/text\(\)$")
+    _tail_re = re.compile(r"^(.+)/tail\(\)$")
     _parents_re = re.compile(r"\.{2,3}")
 
     def __init__(self, root):
@@ -54,7 +55,10 @@ class ETParser(object):
         text_match = self._text_re.match(path)
         if text_match:
             return self._xpath_find(element, text_match.group(1)).text
-        raise ValueError("Only .../@attr and .../text() paths are supported")
+        tail_match = self._tail_re.match(path)
+        if tail_match:
+            return self._xpath_find(element, tail_match.group(1)).tail
+        raise ValueError("Only .../@attr, .../text() and .../tail() paths are supported")
 
 
 class XMLParser(ETParser):
