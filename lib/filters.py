@@ -15,7 +15,7 @@ class FilterBase(object):
 
     @classmethod
     def match(cls, string):
-        for i, v in enumerate(cls.values, 1):
+        for i, v in reversed(list(enumerate(cls.values, 1))):
             if v.regex.search(string):
                 return Result(v.name, i)
         return Unknown
