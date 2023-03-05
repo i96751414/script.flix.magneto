@@ -181,10 +181,14 @@ class Scraper(object):
         return self.parse_query(self._format_query(keyword, formats), pool=pool)
 
     def parse_query(self, query, pool=None):
-        results = self._parse_results(query)
-        for parser in self._additional_parsers:
-            _run(pool, self._parse_additional, [(parser, result) for result in results])
-        return results
+        try:
+            results = self._parse_results(query)
+            for parser in self._additional_parsers:
+                _run(pool, self._parse_additional, [(parser, result) for result in results])
+            return results
+        except Exception as e:
+            logging.error("Failed parsing results for scraper %s: %s", self.name, e)
+            return list()
 
 
 class ScraperRunner(object):
