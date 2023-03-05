@@ -114,6 +114,9 @@ def perform_search(search_type, data):
         for scraper, scraper_results in runner_data:
             logging.debug("Processing %s scraper results", scraper.name)
             for scraper_result in scraper_results:
+                if not scraper_result["title"]:
+                  continue
+
                 magnet = Magnet(scraper_result["magnet"])
                 try:
                     info_hash = magnet.parse_info_hash()
