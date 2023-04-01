@@ -97,7 +97,7 @@ class Result(object):
         return max(seeds * seeds_factor + leeches * leeches_factor, 1) * resolution
 
 
-def perform_search(search_type, data):
+def perform_search(search_types, data):
     results = {}
     scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
                                                 timeout=get_int_setting("scraper_timeout"))
@@ -107,29 +107,34 @@ def perform_search(search_type, data):
         logging.warning("No scrapers configured/enabled")
         return None
 
+    if not isinstance(search_types, list):
+      search_types = [search_types]
+
     runner_class = ProgressScraperRunner if get_boolean_setting("enable_bg_dialog") else ScraperRunner
     with runner_class(scrapers, num_threads=get_int_setting("thread_number")) as runner:
-        runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
+        for search_type in search_types:
+            runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
 
-        for scraper, scraper_results in runner_data:
-            logging.debug("Processing %s scraper results", scraper.name)
-            for scraper_result in scraper_results:
-                if not scraper_result["title"]:
-                  continue
+            for scraper, scraper_results in runner_data:
+                logging.debug("Processing %s scraper results", scraper.name)
+                for scraper_result in scraper_results:
+                    title = scraper_result["title"]
+                    if not title:
+                        continue
 
-                magnet = Magnet(scraper_result["magnet"])
-                try:
-                    info_hash = magnet.parse_info_hash()
-                except InvalidMagnet:
-                    continue
-                if info_hash == "0" * 40:
-                    continue
+                    magnet = Magnet(scraper_result["magnet"])
+                    try:
+                        info_hash = magnet.parse_info_hash()
+                    except InvalidMagnet:
+                        continue
+                    if info_hash == "0" * 40:
+                        continue
 
-                magnet_result = results.get(info_hash)  # type: Result
-                if magnet_result is None:
-                    results[info_hash] = Result(scraper, scraper_result)
-                else:
-                    magnet_result.add_result(scraper, scraper_result)
+                    magnet_result = results.get(info_hash)  # type: Result
+                    if magnet_result is None:
+                        results[info_hash] = Result(scraper, scraper_result)
+                    else:
+                        magnet_result.add_result(scraper, scraper_result)
 
     # noinspection PyTypeChecker
     return [r.to_provider_result() for r in sorted(results.values(), key=Result.get_factor, reverse=True)]
