@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 try:
     from urllib import quote_plus
@@ -122,6 +123,11 @@ def perform_search(search_types, data):
                     if not title:
                         continue
 
+                    if "episode" in search_types and search_type == "season":
+                        if re.search(r"E\d{2,}\s?-\s?\d{2,}", title, re.I) is None:
+                            if len(re.findall(r"E\d{2,}", title, re.I)) == 1:
+                                continue
+
                     magnet = Magnet(scraper_result["magnet"])
                     try:
                         info_hash = magnet.parse_info_hash()
@@ -174,7 +180,11 @@ class MagnetoProvider(Provider):
         return perform_search("season", dict(tmdb_id=tmdb_id, title=Title(show_title, titles), season=season_number))
 
     def search_episode(self, tmdb_id, show_title, season_number, episode_number, titles):
-        return perform_search("episode", dict(
+        search_types = ["episode"]
+        if get_boolean_setting("include_season_results"):
+          search_types.append("season")
+
+        return perform_search(search_types, dict(
             tmdb_id=tmdb_id, title=Title(show_title, titles), season=season_number, episode=episode_number))
 
     def resolve(self, provider_data):

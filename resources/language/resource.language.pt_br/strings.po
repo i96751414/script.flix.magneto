@@ -38,6 +38,10 @@ msgctxt "#30004"
 msgid "Threads number"
 msgstr "Número de threads"
 
+msgctxt "#30005"
+msgid "Include season results in episode search"
+msgstr "Incluir os resultados da temporada na busca de episódios"
+
 # Script
 msgctxt "#30100"
 msgid "Processing"
