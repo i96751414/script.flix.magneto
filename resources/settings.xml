@@ -10,4 +10,38 @@
     <!-- Providers -->
     <category label="30001">
     </category>
+    <!-- Filters -->
+    <category label="30020">
+        <setting id="require_resolution" type="bool" label="30021" default="false" />
+        <setting id="require_release_type" type="bool" label="30022" default="false" />
+        <setting id="require_size" type="bool" label="30023" default="false" />
+        <setting id="require_seeds" type="bool" label="30024" default="false" />
+    </category>
+    <!-- Resolutions -->
+    <category label="30030">
+        <setting id="include_4k" type="bool" label="4K" default="true"/>
+        <setting id="include_2k" type="bool" label="2K" default="true"/>
+        <setting id="include_1080p" type="bool" label="1080p" default="true"/>
+        <setting id="include_720p" type="bool" label="720p" default="true"/>
+        <setting id="include_480p" type="bool" label="480p" default="true"/>
+        <setting id="include_240p" type="bool" label="240p" default="true"/>
+    </category>
+    <!-- Release Types -->
+    <category label="30040">
+        <setting id="include_trailer" type="bool" label="Trailer" default="true"/>
+        <setting id="include_workprint" type="bool" label="Workprint" default="true"/>
+        <setting id="include_vhsrip" type="bool" label="VHSrip" default="true"/>
+        <setting id="include_tvrip" type="bool" label="TVRip" default="true"/>
+        <setting id="include_cam" type="bool" label="CAM" default="true"/>
+        <setting id="include_telesync" type="bool" label="TeleSync" default="true"/>
+        <setting id="include_telecine" type="bool" label="TeleCine" default="true"/>
+        <setting id="include_screener" type="bool" label="Screener" default="true"/>
+        <setting id="include_dvdscreener" type="bool" label="DVDScreener" default="true"/>
+        <setting id="include_r5" type="bool" label="R5" default="true"/>
+        <setting id="include_dvdrip" type="bool" label="DVDRip" default="true"/>
+        <setting id="include_hdtv" type="bool" label="HDTV" default="true"/>
+        <setting id="include_hdrip" type="bool" label="HDRip" default="true"/>
+        <setting id="include_webdl" type="bool" label="WebDL" default="true"/>
+        <setting id="include_brrip" type="bool" label="BRRip" default="true"/>
+    </category>
 </settings>

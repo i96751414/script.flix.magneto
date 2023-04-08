@@ -42,6 +42,34 @@ msgctxt "#30005"
 msgid "Include season results in episode search"
 msgstr ""
 
+msgctxt "#30020"
+msgid "Filters"
+msgstr ""
+
+msgctxt "#30021"
+msgid "Require resolution"
+msgstr ""
+
+msgctxt "#30022"
+msgid "Require release type"
+msgstr ""
+
+msgctxt "#30023"
+msgid "Require file size"
+msgstr ""
+
+msgctxt "#30024"
+msgid "Require seeds"
+msgstr ""
+
+msgctxt "#30030"
+msgid "Resolutions"
+msgstr ""
+
+msgctxt "#30040"
+msgid "Releases"
+msgstr ""
+
 # Script
 msgctxt "#30100"
 msgid "Processing"

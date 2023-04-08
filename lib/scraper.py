@@ -8,6 +8,7 @@ from string import Formatter
 import requests
 
 from lib.parsers import HTMLParser, JSONParser, XMLParser
+from lib.filters import Resolution, ReleaseType
 
 try:
     # noinspection PyUnresolvedReferences
@@ -240,7 +241,26 @@ def generate_settings(path, enabled_count=-1):
     <!-- Providers -->
     <category label="30001">{}
     </category>
+    <!-- Filters -->
+    <category label="30020">
+        <setting id="require_resolution" type="bool" label="30021" default="false" />
+        <setting id="require_release_type" type="bool" label="30022" default="false" />
+        <setting id="require_size" type="bool" label="30023" default="false" />
+        <setting id="require_seeds" type="bool" label="30024" default="false" />
+    </category>
+    <!-- Resolutions -->
+    <category label="30030">{}
+    </category>
+    <!-- Release Types -->
+    <category label="30040">{}
+    </category>
 </settings>""".format(
         "".join('\n{}<setting id="{}" type="bool" label="{}" default="{}"/>'.format(
             " " * 4 * 2, scraper.id, scraper.name, "false" if 0 <= enabled_count <= i else "true")
-                for i, scraper in enumerate(Scraper.get_scrapers(path))))
+                for i, scraper in enumerate(Scraper.get_scrapers(path))),
+        "".join('\n{}<setting id="include_{}" type="bool" label="{}" default="true"/>'.format(
+            " " * 4 * 2, resolution.name.lower(), resolution.name)
+                for resolution in reversed(Resolution.values)),
+        "".join('\n{}<setting id="include_{}" type="bool" label="{}" default="true"/>'.format(
+            " " * 4 * 2, release.name.lower(), release.name)
+                for release in ReleaseType.values))
