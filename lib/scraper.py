@@ -34,20 +34,20 @@ def sizeof_fmt(num, suffix="B", divisor=1000.0):
     return "{:g} {}{}".format(num, "Y", suffix)
 
 
-def sizenum_fmt(str):
-    num = float(re.search(r"[\d,.]+", str).group())
+def sizenum_fmt(val):
+    num = float(re.search(r"[\d,.]+", val).group())
     for i, unit in enumerate(("k", "M", "B", "T", "P", "E", "Z"), start=1):
-        if re.search(unit, str, re.I):
+        if re.search(unit, val, re.I):
             num *= pow(1000, i)
     return "{:g}".format(num)
 
 
-def extract_magnet(str):
-    return re.search(r"magnet:\?xt=urn:btih:([A-Fa-f\d]{40})(&(dn|tr)=[^&]+){0,}", str).group()
+def extract_magnet(val):
+    return re.search(r"magnet:\?xt=urn:btih:([A-Fa-f\d]{40})(&(dn|tr)=[^&]+){0,}", val).group()
 
 
-def extract_infohash(str):
-    return re.search(r"magnet:\?xt=urn:btih:([A-Fa-f\d]{40})", str).group(1)
+def extract_infohash(val):
+    return re.search(r"magnet:\?xt=urn:btih:([A-Fa-f\d]{40})", val).group(1)
 
 
 class ExtendedFormatter(Formatter):
