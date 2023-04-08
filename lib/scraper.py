@@ -16,10 +16,10 @@ except ImportError:
     pass
 
 try:
-    from urllib.parse import quote
+    from urllib.parse import quote, unquote
 except ImportError:
     # noinspection PyUnresolvedReferences
-    from urllib import quote
+    from urllib import quote, unquote
 
 
 def strip_accents(s):
@@ -29,9 +29,25 @@ def strip_accents(s):
 def sizeof_fmt(num, suffix="B", divisor=1000.0):
     for unit in ("", "k", "M", "G", "T", "P", "E", "Z"):
         if abs(num) < divisor:
-            return "{:.2f} {}{}".format(num, unit, suffix)
+            return "{:g} {}{}".format(round(num, 2), unit, suffix)
         num /= divisor
-    return "{:.2f} {}{}".format(num, "Y", suffix)
+    return "{:g} {}{}".format(num, "Y", suffix)
+
+
+def sizenum_fmt(val):
+    num = float(re.search(r"[\d,.]+", val).group())
+    for i, unit in enumerate(("k", "M", "B", "T", "P", "E", "Z"), start=1):
+        if re.search(unit, val, re.I):
+            num *= pow(1000, i)
+    return "{:g}".format(num)
+
+
+def extract_magnet(val):
+    return re.search(r"magnet:\?xt=urn:btih:([A-Fa-f\d]{40})(&(dn|tr)=[^&]+){0,}", val).group()
+
+
+def extract_infohash(val):
+    return re.search(r"magnet:\?xt=urn:btih:([A-Fa-f\d]{40})", val).group(1)
 
 
 class ExtendedFormatter(Formatter):
@@ -44,6 +60,12 @@ class ExtendedFormatter(Formatter):
             return strip_accents(value)
         elif conversion == "b":
             return sizeof_fmt(int(value))
+        elif conversion == "n":
+            return sizenum_fmt(value)
+        elif conversion == "m":
+            return extract_magnet(unquote(value))
+        elif conversion == "h":
+            return extract_infohash(unquote(value))
         return super(ExtendedFormatter, self).convert_field(value, conversion)
 
     def format_field(self, value, format_spec):
