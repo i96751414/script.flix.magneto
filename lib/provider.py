@@ -128,7 +128,7 @@ def perform_search(search_types, data):
         return None
 
     if not isinstance(search_types, list):
-      search_types = [search_types]
+        search_types = [search_types]
 
     runner_class = ProgressScraperRunner if get_boolean_setting("enable_bg_dialog") else ScraperRunner
     with runner_class(scrapers, num_threads=get_int_setting("thread_number")) as runner:
@@ -203,7 +203,7 @@ class MagnetoProvider(Provider):
     def search_episode(self, tmdb_id, show_title, season_number, episode_number, titles):
         search_types = ["episode"]
         if get_boolean_setting("include_season_results"):
-          search_types.append("season")
+            search_types.append("season")
 
         return perform_search(search_types, dict(
             tmdb_id=tmdb_id, title=Title(show_title, titles), season=season_number, episode=episode_number))
