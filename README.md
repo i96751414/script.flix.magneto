@@ -49,6 +49,8 @@ This section describes the supported conversions/formats.
 |`{<field>!A}`|Strips all accents from the specified `<field>`|
 |`{<field>!b}`|Converts the specified `<field>` to a human readable size|
 |`{<field>!n}`|Converts the specified `<field>` from human readable number to numeric value|
+|`{<field>!m}`|Extracts magnet link from the specified `<field>`|
+|`{<field>!h}`|Extracts info hash from the specified `<field>`|
 
 |Format|Description|
 |------|-----------|
