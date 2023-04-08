@@ -29,9 +29,9 @@ def strip_accents(s):
 def sizeof_fmt(num, suffix="B", divisor=1000.0):
     for unit in ("", "k", "M", "G", "T", "P", "E", "Z"):
         if abs(num) < divisor:
-            return "{:.2f} {}{}".format(num, unit, suffix)
+            return "{:g} {}{}".format(round(num, 2), unit, suffix)
         num /= divisor
-    return "{:.2f} {}{}".format(num, "Y", suffix)
+    return "{:g} {}{}".format(num, "Y", suffix)
 
 
 def sizenum_fmt(str):
