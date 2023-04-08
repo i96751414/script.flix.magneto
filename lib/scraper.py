@@ -34,6 +34,14 @@ def sizeof_fmt(num, suffix="B", divisor=1000.0):
     return "{:.2f} {}{}".format(num, "Y", suffix)
 
 
+def sizenum_fmt(str):
+    num = float(re.search(r"[\d,.]+", str).group())
+    for i, unit in enumerate(("k", "M", "B", "T", "P", "E", "Z"), start=1):
+        if re.search(unit, str, re.I):
+            num *= pow(1000, i)
+    return "{:g}".format(num)
+
+
 class ExtendedFormatter(Formatter):
     def convert_field(self, value, conversion):
         if conversion == "u":
@@ -44,6 +52,8 @@ class ExtendedFormatter(Formatter):
             return strip_accents(value)
         elif conversion == "b":
             return sizeof_fmt(int(value))
+        elif conversion == "n":
+            return sizenum_fmt(value)
         return super(ExtendedFormatter, self).convert_field(value, conversion)
 
     def format_field(self, value, format_spec):

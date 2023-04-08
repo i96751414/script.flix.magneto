@@ -48,6 +48,7 @@ This section describes the supported conversions/formats.
 |`{<field>!l}`|Converts the specified `<field>` to lower case|
 |`{<field>!A}`|Strips all accents from the specified `<field>`|
 |`{<field>!b}`|Converts the specified `<field>` to a human readable size|
+|`{<field>!n}`|Converts the specified `<field>` from human readable number to numeric value|
 
 |Format|Description|
 |------|-----------|
