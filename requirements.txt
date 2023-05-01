@@ -1,0 +1,4 @@
+requests==2.29.0
+jsonschema==4.17.3
+defusedxml==0.7.1
+htmlement==2.0.0
