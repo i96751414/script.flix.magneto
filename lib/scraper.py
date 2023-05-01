@@ -53,6 +53,10 @@ class ExtendedFormatter(Formatter):
             return quote(value.encode("utf-8"), "")
         elif format_spec.startswith("q") and len(format_spec) == 2:
             return quote(value.encode("utf-8"), " ").replace(" ", format_spec[1])
+        elif (len(format_spec) >= 4 and format_spec[0] == "r" and format_spec[1] == format_spec[-1] and
+              format_spec[1] in format_spec[2:-1]):
+            pattern, repl = format_spec[2:-1].split(format_spec[1], 1)
+            return re.sub(pattern, repl, value)
         return super(ExtendedFormatter, self).format_field(value, format_spec)
 
 
