@@ -52,7 +52,7 @@ msgstr "Exigir resolução"
 
 msgctxt "#30022"
 msgid "Require release type"
-msgstr "Exigir tipo de liberação"
+msgstr "Exigir tipo de lançamento"
 
 msgctxt "#30023"
 msgid "Require file size"

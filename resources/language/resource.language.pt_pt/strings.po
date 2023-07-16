@@ -40,7 +40,7 @@ msgstr "Número de threads"
 
 msgctxt "#30005"
 msgid "Include season results in episode search"
-msgstr "Incluir os resultados da época na pesquisa de episódios"
+msgstr "Incluir os resultados da temporada na pesquisa de episódios"
 
 msgctxt "#30020"
 msgid "Filters"
@@ -52,7 +52,7 @@ msgstr "Exigir resolução"
 
 msgctxt "#30022"
 msgid "Require release type"
-msgstr "Exigir tipo de liberação"
+msgstr "Exigir tipo de lançamento"
 
 msgctxt "#30023"
 msgid "Require file size"
