@@ -55,6 +55,19 @@ class Result(object):
             if getattr(self, field) is Unknown:
                 setattr(self, field, filter_obj.match(title))
 
+    def include_result(self):
+        if get_boolean_setting("require_size") and not bool(self._size):
+            return False
+        if get_boolean_setting("require_seeds") and not bool(self.seeds):
+            return False
+        if get_boolean_setting("require_resolution"):
+            if not get_boolean_setting("include_{}".format(self._resolution.name.lower())):
+                return False
+        if get_boolean_setting("require_release_type"):
+            if not get_boolean_setting("include_{}".format(self._release.name.lower())):
+                return False
+        return True
+
     def add_result(self, scraper, result):
         self._providers.add(self._get_scraper_name(scraper))
         self._get_optional_fields(result)
@@ -98,25 +111,6 @@ class Result(object):
         return max(seeds * seeds_factor + leeches * leeches_factor, 1) * resolution
 
 
-def include_result(result):
-    if get_boolean_setting("require_size") and not bool(result._size):
-        return False
-
-    if get_boolean_setting("require_seeds") and not bool(result.seeds):
-        return False
-
-    if get_boolean_setting("require_resolution"):
-        resolution = result._resolution.name.lower()
-        if not get_boolean_setting("include_{}".format(resolution)):
-            return False
-
-    if get_boolean_setting("require_release_type"):
-        release = result._release.name.lower()
-        if not get_boolean_setting("include_{}".format(release)):
-            return False
-    return True
-
-
 def perform_search(search_types, data):
     results = {}
     scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
@@ -158,7 +152,7 @@ def perform_search(search_types, data):
                     magnet_result = results.get(info_hash)  # type: Result
                     if magnet_result is None:
                         result = Result(scraper, scraper_result)
-                        if include_result(result):
+                        if result.include_result():
                             results[info_hash] = result
                     else:
                         magnet_result.add_result(scraper, scraper_result)
