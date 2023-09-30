@@ -12,7 +12,8 @@ import requests
 from defusedxml import ElementTree, minidom
 
 from lib.parsers import XMLParser, JSONParser, HTMLParser, create_xml_tree
-from lib.scraper import Scraper, ScraperRunner, generate_settings
+from lib.scraper import Scraper, ScraperRunner
+from lib.filters import Resolution, ReleaseType
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_PATH = os.path.join(ROOT_PATH, "resources")
@@ -118,6 +119,52 @@ def print_results(scraper_name, results):
         title += " | {}".format(scraper_name)
 
         print("+ {}\n{}\n".format(title, result["magnet"]))
+
+
+def generate_settings(path, enabled_count=-1):
+    providers = "".join(
+        '\n{}<setting id="{}" type="bool" label="{}" default="{}"/>'
+        .format(" " * 4 * 2, scraper.id, scraper.name, "false" if 0 <= enabled_count <= i else "true")
+        for i, scraper in enumerate(Scraper.get_scrapers(path)))
+
+    resolutions = "".join(
+        '\n{}<setting id="include_resolution_{}" type="bool" label="{}" default="true" enable="eq(-{},true)"/>'
+        .format(" " * 4 * 2, resolution.name.lower(), resolution.name, i)
+        for i, resolution in enumerate(reversed(Resolution.values), 1))
+
+    release_types = "".join(
+        '\n{}<setting id="include_release_{}" type="bool" label="{}" default="true" enable="eq(-{},true)"/>'
+        .format(" " * 4 * 2, release.name.lower(), release.name, i)
+        for i, release in enumerate(reversed(ReleaseType.values), 1))
+
+    return """\
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <!-- General -->
+    <category label="30000">
+        <setting id="scraper_timeout" type="slider" label="30002" option="int" range="10,1,60" default="30"/>
+        <setting id="thread_number" type="slider" label="30004" option="int" range="1,1,50" default="10"/>
+        <setting id="enable_bg_dialog" type="bool" label="30003" default="true"/>
+    </category>
+    <!-- Providers -->
+    <category label="30001">{}
+    </category>
+    <!-- Filters -->
+    <category label="30020">
+        <setting id="require_resolution" type="bool" label="30021" default="false"/>
+        <setting id="require_release_type" type="bool" label="30022" default="false"/>
+        <setting id="require_size" type="bool" label="30023" default="false"/>
+        <setting id="require_seeds" type="bool" label="30024" default="false"/>
+    </category>
+    <!-- Resolutions -->
+    <category label="30030">
+        <setting id="require_resolution" type="bool" visible="false"/>{}
+    </category>
+    <!-- Release Types -->
+    <category label="30040">
+        <setting id="require_release_type" type="bool" visible="false"/>{}
+    </category>
+</settings>""".format(providers, resolutions, release_types)
 
 
 def generate_settings_and_save(args):

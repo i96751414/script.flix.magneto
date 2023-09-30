@@ -9,6 +9,20 @@ except ImportError:
 text = u"".__class__
 
 
+class CachedCall(object):
+    def __init__(self, callback):
+        self._cache = {}
+        self._callback = callback
+
+    def __call__(self, key):
+        try:
+            value = self._cache[key]
+        except KeyError:
+            value = self._callback(key)
+            self._cache[key] = value
+        return value
+
+
 class Title(text):
     def __new__(cls, title, titles=None):
         self = super(Title, cls).__new__(cls, title)

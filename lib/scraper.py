@@ -16,10 +16,12 @@ except ImportError:
     pass
 
 try:
-    from urllib.parse import quote
+    from urllib.parse import quote, urljoin
 except ImportError:
     # noinspection PyUnresolvedReferences
     from urllib import quote
+    # noinspection PyUnresolvedReferences
+    from urlparse import urljoin
 
 
 def strip_accents(s):
@@ -154,9 +156,7 @@ class Scraper(object):
                 raise e
 
     def _get_url(self, value):
-        if not value.startswith("http"):
-            value = self._base_url + value
-        return value
+        return urljoin(self._base_url, value)
 
     def _parse_results(self, query):
         url = self._get_url(_formatter.format(self._results_parser.url, query=query))
@@ -220,22 +220,3 @@ class ScraperRunner(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
-
-
-def generate_settings(path, enabled_count=-1):
-    return """\
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<settings>
-    <!-- General -->
-    <category label="30000">
-        <setting id="scraper_timeout" type="slider" label="30002" option="int" range="10,1,60" default="30"/>
-        <setting id="thread_number" type="slider" label="30004" option="int" range="1,1,50" default="10"/>
-        <setting id="enable_bg_dialog" type="bool" label="30003" default="true"/>
-    </category>
-    <!-- Providers -->
-    <category label="30001">{}
-    </category>
-</settings>""".format(
-        "".join('\n{}<setting id="{}" type="bool" label="{}" default="{}"/>'.format(
-            " " * 4 * 2, scraper.id, scraper.name, "false" if 0 <= enabled_count <= i else "true")
-                for i, scraper in enumerate(Scraper.get_scrapers(path))))

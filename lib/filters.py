@@ -3,7 +3,7 @@ from collections import namedtuple
 
 Filter = namedtuple("Filter", "name regex")
 Result = namedtuple("Result", "name factor")
-Unknown = Result("", 0)
+Unknown = Result("Unknown", 0)
 
 
 def _compile(pattern):

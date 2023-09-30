@@ -38,6 +38,34 @@ msgctxt "#30004"
 msgid "Threads number"
 msgstr "Número de threads"
 
+msgctxt "#30020"
+msgid "Filters"
+msgstr "Filtros"
+
+msgctxt "#30021"
+msgid "Require resolution"
+msgstr "Requerer resolução"
+
+msgctxt "#30022"
+msgid "Require release type"
+msgstr "Requerer tipo de lançamento"
+
+msgctxt "#30023"
+msgid "Require file size"
+msgstr "Requerer tamanho do arquivo"
+
+msgctxt "#30024"
+msgid "Require seeds"
+msgstr "Requerer seeds"
+
+msgctxt "#30030"
+msgid "Resolutions"
+msgstr "Resoluções"
+
+msgctxt "#30040"
+msgid "Releases"
+msgstr "Lançamentos"
+
 # Script
 msgctxt "#30100"
 msgid "Processing"
