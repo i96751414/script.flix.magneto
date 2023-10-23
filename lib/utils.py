@@ -53,7 +53,7 @@ class Magnet(object):
         match = self._info_hash_re.search(self._magnet)
         if match is None:
             raise InvalidMagnet("Unable to parse info hash from magnet")
-        return match.group(1)
+        return match.group(1).lower()
 
     def parse_trackers(self):
         return [unquote(t) for t in self._tracker_re.findall(self._magnet)]
