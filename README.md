@@ -76,6 +76,16 @@ This section describes the supported conversions/formats.
 Python default conversions/formats are also supported.
 See [custom string formatting](https://docs.python.org/3/library/string.html#custom-string-formatting).
 
+### Functions support
+
+Functions support is **experimental**. Please see the below table for the available functions.
+
+| Format                        | Description                                                         |
+|-------------------------------|---------------------------------------------------------------------|
+| `{<field>:replace(str, str)}` | Replaces the specified RegEx pattern with the provided string       |
+| `{<field>:split(str)}`        | Splits the field (assuming its a string) by the specified delimiter |
+| `{<field>:get(int)}`          | Gets the item at the provided index. Useful for split operations    |
+
 ### Accessing alternative titles
 
 By default, one can access the movie/show title by using `{title}`. However, alternative titles can also be used by
