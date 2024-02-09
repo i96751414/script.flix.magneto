@@ -80,11 +80,14 @@ See [custom string formatting](https://docs.python.org/3/library/string.html#cus
 
 Functions support is **experimental**. Please see the below table for the available functions.
 
-| Format                        | Description                                                         |
+| Function                      | Description                                                         |
 |-------------------------------|---------------------------------------------------------------------|
 | `{<field>:replace(str, str)}` | Replaces the specified RegEx pattern with the provided string       |
 | `{<field>:split(str)}`        | Splits the field (assuming its a string) by the specified delimiter |
 | `{<field>:get(int)}`          | Gets the item at the provided index. Useful for split operations    |
+
+Function chaining is also supported. To do so, simply chain functions in the format specification:
+`{<field>:split(' ').get(0)}`
 
 ### Accessing alternative titles
 
