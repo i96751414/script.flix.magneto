@@ -226,6 +226,9 @@ size by `results_parser.mutate` (note `{size!b}`).
 ]
 ```
 
+In this specific case only a single mutate operation was required. However, if multiple are required for the same
+parameter, mutate can be defined as an array.
+
 ## Testing the provider
 
 The `provider_test.py` tool was created so developers can test their providers without having to run Kodi. In order to
@@ -252,7 +255,7 @@ python3 provider_test.py verify
 
 ### xpath
 
-The `xpath` command evaluates the provided xpath against the provided URL contents. It supports JSON, XML and HTML 
+The `xpath` command evaluates the provided xpath against the provided URL contents. It supports JSON, XML and HTML
 (default) content types, and it can be run as a single xpath or as a list of xpaths (by using `--row` option).
 
 ```shell
@@ -271,7 +274,7 @@ python3 provider_test.py generate-settings
 
 ### parse
 
-The `parse` command allows to emulate a real search, using real providers. Depending on the search type, additional 
+The `parse` command allows to emulate a real search, using real providers. Depending on the search type, additional
 arguments may be required. All parse commands can be executed against a single provider. To do so, use the `-i` or
 `--provider-id` argument (e.g. `--provider-id <provider-id>`).
 

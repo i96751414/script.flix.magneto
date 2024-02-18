@@ -9,12 +9,6 @@ from lib.formatter import ExtendedFormatter
 from lib.parsers import HTMLParser, JSONParser, XMLParser
 
 try:
-    # noinspection PyUnresolvedReferences
-    from typing import List, Dict
-except ImportError:
-    pass
-
-try:
     from urllib.parse import urljoin
 except ImportError:
     # noinspection PyUnresolvedReferences
@@ -25,40 +19,44 @@ _formatter = ExtendedFormatter()
 
 class Parser(object):
     # noinspection PyShadowingBuiltins
-    def __init__(self, url, data, type="html", mutate=None):
-        self.url = url
-        self.data = data
-        self.mutate = mutate or {}
+    def __init__(self, url, data, type="html", mutate=()):
+        # type: (str, str, str, list[dict[str, str]] | dict[str, str]) -> None
+        self._url = url
+        self._data = data
+        self._mutate = list(mutate.items()) if isinstance(mutate, dict) else [i for m in mutate for i in m.items()]
 
         if type == "html":
-            self.clazz = HTMLParser
+            self._clazz = HTMLParser
         elif type == "json":
-            self.clazz = JSONParser
+            self._clazz = JSONParser
         elif type == "xml":
-            self.clazz = XMLParser
+            self._clazz = XMLParser
         else:
             raise ValueError("type must be one of html/json/xml")
 
-    def update_result(self, result, content):
-        self.clazz(content).update_result(self.data, result)
-        for key, value in self.mutate.items():
-            self._mutate_result(result, key, value)
+    @property
+    def url(self):
+        return self._url
 
-    @staticmethod
-    def _mutate_result(result, key, value):
-        result[key] = _formatter.format(value, **result)
+    def update_result(self, result, content):
+        self._clazz(content).update_result(self._data, result)
+        self._mutate_result(result)
+
+    def _mutate_result(self, result):
+        for key, value in self._mutate:
+            result[key] = _formatter.format(value, **result)
 
 
 class ResultsParser(Parser):
     def __init__(self, rows, *args, **kwargs):
+        # type: (str, tuple, dict) -> None
         super(ResultsParser, self).__init__(*args, **kwargs)
-        self.rows = rows
+        self._rows = rows
 
     def parse_results(self, content):
-        results = self.clazz(content).parse_results(self.rows, self.data)
-        for key, value in self.mutate.items():
-            for result in results:
-                self._mutate_result(result, key, value)
+        results = self._clazz(content).parse_results(self._rows, self._data)
+        for result in results:
+            self._mutate_result(result)
         return results
 
 
@@ -88,7 +86,7 @@ class Scraper(object):
 
     def __init__(self, name, base_url, results_parser, additional_parsers=None, keywords=None, attributes=None,
                  timeout=None):
-        # type: (str, str, ResultsParser, List[Parser], Dict[str, str], dict, int) -> None
+        # type: (str, str, ResultsParser, list[Parser], dict[str, str], dict, int) -> None
         self._name = name
         self._base_url = base_url
         self._results_parser = results_parser

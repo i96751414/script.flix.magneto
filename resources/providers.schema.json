@@ -111,6 +111,20 @@
     "additionalProperties": false
   },
   "definitions": {
+    "mutate": {
+      "type": "object",
+      "title": "The mutate object",
+      "description": "Object to combine/modify/create items after data items were parsed",
+      "additionalProperties": {
+        "type": "string",
+        "title": "The data item to mutate",
+        "description": "The data item to mutate. It can depend on any other data items.",
+        "examples": [
+          "magnet:?xt=urn:btih:{hash}",
+          "{size!b}"
+        ]
+      }
+    },
     "parser": {
       "type": "object",
       "properties": {
@@ -144,18 +158,18 @@
           }
         },
         "mutate": {
-          "type": "object",
-          "title": "The mutate object",
-          "description": "Object to combine/modify/create items after data items were parsed",
-          "additionalProperties": {
-            "type": "string",
-            "title": "The data item to mutate",
-            "description": "The data item to mutate. It can depend on any other data items.",
-            "examples": [
-              "magnet:?xt=urn:btih:{hash}",
-              "{size!b}"
-            ]
-          }
+          "anyOf": [
+            {
+              "$ref": "#/definitions/mutate"
+            },
+            {
+              "type": "array",
+              "description": "The list containing all mutate operations to perform.",
+              "items": {
+                "$ref": "#/definitions/mutate"
+              }
+            }
+          ]
         }
       },
       "required": [

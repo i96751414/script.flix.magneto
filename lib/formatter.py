@@ -66,7 +66,7 @@ class ExtendedFormatter(Formatter):
         return super(ExtendedFormatter, self).format_field(value, format_spec)
 
     def parse_functions(self, string):
-        return self._parse_functions(ast.parse(string, mode="eval").body, )
+        return self._parse_functions(ast.parse(string, mode="eval").body)
 
     def _parse_functions(self, node):
         if isinstance(node, ast.Call):
