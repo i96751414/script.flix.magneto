@@ -132,13 +132,14 @@ class Scraper(object):
         return self._spaces_re.sub(".", self._name.lower())
 
     def get_attribute(self, key, **kwargs):
-        try:
-            return self._attributes[key]
-        except KeyError as e:
-            if "default" in kwargs:
-                return kwargs["default"]
-            else:
-                raise e
+        sentinel = object()
+        attribute = self._attributes.get(key, sentinel)
+        if attribute is sentinel:
+            attribute = kwargs.get("default", sentinel)
+            if attribute is sentinel:
+                raise ValueError("No such attribute: {}".format(key))
+
+        return attribute
 
     def _format_query(self, keyword, formats):
         query = _formatter.format(self._keywords[keyword], **formats)
