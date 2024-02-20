@@ -13,7 +13,7 @@ clean implementation of an abstract scraper which is intended to work against as
 -   Very easy to add/update scrapers
 -   Very fast
 -   Intended to be as generic as possible
--   Uses xpath for getting items (even for json APIs)
+-   Uses [xpath](https://docs.python.org/3/library/xml.etree.elementtree.html#xpath-support) for getting items (even for json APIs)
 -   Allows to mutate parsed data, using a custom formatter
 -   Possible to test the providers using `provider_test.py` script
 

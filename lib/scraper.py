@@ -17,13 +17,16 @@ except ImportError:
 _formatter = ExtendedFormatter()
 
 
-class Parser(object):
+class _BaseParser(object):
     # noinspection PyShadowingBuiltins
-    def __init__(self, url, data, type="html", mutate=()):
-        # type: (str, str, str, list[dict[str, str]] | dict[str, str]) -> None
+    def __init__(self, url, data, base_url=None, type="html", mutate=(), session=None, timeout=None):
+        # type: (str, str, str, str, list[dict[str, str]] | dict[str, str], requests.Session, int) -> None
         self._url = url
         self._data = data
+        self._base_url = base_url
         self._mutate = list(mutate.items()) if isinstance(mutate, dict) else [i for m in mutate for i in m.items()]
+        self._session = session or requests
+        self._timeout = timeout
 
         if type == "html":
             self._clazz = HTMLParser
@@ -34,22 +37,31 @@ class Parser(object):
         else:
             raise ValueError("type must be one of html/json/xml")
 
-    @property
-    def url(self):
-        return self._url
-
-    def update_result(self, result, content):
-        self._clazz(content).update_result(self._data, result)
-        self._mutate_result(result)
-
     def _mutate_result(self, result):
         for key, value in self._mutate:
             result[key] = _formatter.format(value, **result)
 
+    def _get_content(self, **kwargs):
+        url_formatted = _formatter.format(self._url, **kwargs)
+        full_url = url_formatted if self._base_url is None else urljoin(self._base_url, url_formatted)
+        logging.debug("Getting content for url %s", full_url)
+        r = self._session.get(full_url, timeout=self._timeout)
+        r.raise_for_status()
+        return r.content
 
-class ResultsParser(Parser):
+
+class AdditionalParser(_BaseParser):
+    def update_result(self, result, content):
+        self._clazz(content).update_result(self._data, result)
+        self._mutate_result(result)
+
+    def get_and_update_result(self, result):
+        self.update_result(result, self._get_content(**result))
+
+
+class ResultsParser(_BaseParser):
     def __init__(self, rows, *args, **kwargs):
-        # type: (str, tuple, dict) -> None
+        # type: (str, any, any) -> None
         super(ResultsParser, self).__init__(*args, **kwargs)
         self._rows = rows
 
@@ -58,6 +70,9 @@ class ResultsParser(Parser):
         for result in results:
             self._mutate_result(result)
         return results
+
+    def get_and_parse_results(self, query):
+        return self.parse_results(self._get_content(query=query))
 
 
 def _run(pool, func, iterable):
@@ -79,26 +94,22 @@ class Scraper(object):
 
     @classmethod
     def from_data(cls, data, timeout=None):
+        base_url = data["base_url"]
+        session = requests.Session()
+        session.headers = {"User-Agent": cls._user_agent, "Accept-Encoding": "gzip"}
         return cls(
-            data["name"], data["base_url"], ResultsParser(**data["results_parser"]),
-            additional_parsers=[Parser(**d) for d in data.get("additional_parsers", [])],
-            keywords=data.get("keywords"), attributes=data.get("attributes"), timeout=timeout)
+            data["name"], ResultsParser(base_url=base_url, session=session, timeout=timeout, **data["results_parser"]),
+            additional_parsers=[AdditionalParser(base_url=base_url, session=session, timeout=timeout, **d)
+                                for d in data.get("additional_parsers", [])],
+            keywords=data.get("keywords"), attributes=data.get("attributes"))
 
-    def __init__(self, name, base_url, results_parser, additional_parsers=None, keywords=None, attributes=None,
-                 timeout=None):
-        # type: (str, str, ResultsParser, list[Parser], dict[str, str], dict, int) -> None
+    def __init__(self, name, results_parser, additional_parsers=None, keywords=None, attributes=None):
+        # type: (str, ResultsParser, list[AdditionalParser], dict[str, str], dict) -> None
         self._name = name
-        self._base_url = base_url
         self._results_parser = results_parser
         self._additional_parsers = additional_parsers or []
         self._keywords = keywords or {}
         self._attributes = attributes or {}
-        self._session = requests.Session()
-        self._timeout = timeout
-        self._session.headers = {
-            "User-Agent": self._user_agent,
-            "Accept-Encoding": "gzip",
-        }
 
     @property
     def name(self):
@@ -117,24 +128,6 @@ class Scraper(object):
             else:
                 raise e
 
-    def _get_url(self, value):
-        return urljoin(self._base_url, value)
-
-    def _parse_results(self, query):
-        url = self._get_url(_formatter.format(self._results_parser.url, query=query))
-        logging.debug("Getting results for url %s", url)
-        r = self._session.get(url, timeout=self._timeout)
-        r.raise_for_status()
-        return self._results_parser.parse_results(r.content)
-
-    def _parse_additional(self, data):
-        parser, result = data
-        url = self._get_url(_formatter.format(parser.url, **result))
-        logging.debug("Getting additional results for url %s", url)
-        r = self._session.get(url, timeout=self._timeout)
-        r.raise_for_status()
-        parser.update_result(result, r.content)
-
     def _format_query(self, keyword, formats):
         query = _formatter.format(self._keywords[keyword], **formats)
         return self._spaces_re.sub(" ", query.strip())
@@ -143,9 +136,9 @@ class Scraper(object):
         return self.parse_query(self._format_query(keyword, formats), pool=pool)
 
     def parse_query(self, query, pool=None):
-        results = self._parse_results(query)
+        results = self._results_parser.get_and_parse_results(query)
         for parser in self._additional_parsers:
-            _run(pool, self._parse_additional, [(parser, result) for result in results])
+            _run(pool, parser.get_and_update_result, results)
         return results
 
 
