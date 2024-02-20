@@ -81,6 +81,18 @@ def _run(pool, func, iterable):
     return list(pool.map(func, iterable))
 
 
+def _with_failed_item(func):
+    def wrapper(result):
+        try:
+            func(result)
+            return None
+        except Exception as e:
+            logging.warning("Failed to execute {}: {}".format(func.__name__, e))
+            return result
+
+    return wrapper
+
+
 class Scraper(object):
     _spaces_re = re.compile(r"\s+")
     _user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -132,13 +144,22 @@ class Scraper(object):
         query = _formatter.format(self._keywords[keyword], **formats)
         return self._spaces_re.sub(" ", query.strip())
 
-    def parse(self, keyword, formats, pool=None):
-        return self.parse_query(self._format_query(keyword, formats), pool=pool)
+    def parse(self, keyword, formats, ignore_failed_updates=True, pool=None):
+        return self.parse_query(
+            self._format_query(keyword, formats), ignore_failed_updates=ignore_failed_updates, pool=pool)
 
-    def parse_query(self, query, pool=None):
+    def parse_query(self, query, ignore_failed_updates=True, pool=None):
+        decorator = _with_failed_item if ignore_failed_updates else lambda x: x
         results = self._results_parser.get_and_parse_results(query)
+
         for parser in self._additional_parsers:
-            _run(pool, parser.get_and_update_result, results)
+            for result in _run(pool, decorator(parser.get_and_update_result), results):
+                if result is not None:
+                    results.remove(result)
+
+        if len(results) == 0:
+            logging.warning("No results found for query: {}".format(query))
+
         return results
 
 
