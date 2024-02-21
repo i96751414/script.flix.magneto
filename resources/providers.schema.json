@@ -144,6 +144,14 @@
           ],
           "default": "html"
         },
+        "rows": {
+          "type": "string",
+          "title": "The rows definition for this parser",
+          "description": "The rows xpath (must be iterable) definition for the parser.",
+          "examples": [
+            ".//items"
+          ]
+        },
         "data": {
           "type": "object",
           "title": "The data object",
@@ -185,16 +193,6 @@
           "$ref": "#/definitions/parser"
         },
         {
-          "properties": {
-            "rows": {
-              "type": "string",
-              "title": "The rows definition for this parser",
-              "description": "The rows xpath (must be iterable) definition for the parser.",
-              "examples": [
-                ".//items"
-              ]
-            }
-          },
           "required": [
             "rows"
           ]

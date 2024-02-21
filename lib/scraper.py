@@ -1,3 +1,5 @@
+import copy
+import itertools
 import json
 import logging
 import re
@@ -51,12 +53,33 @@ class _BaseParser(object):
 
 
 class AdditionalParser(_BaseParser):
-    def update_result(self, result, content):
+    def __init__(self, *args, rows=None, **kwargs):
+        # type: (any, str, any) -> None
+        super(AdditionalParser, self).__init__(*args, **kwargs)
+        self._rows = rows
+
+    def _update_result(self, result, content):
         self._clazz(content).update_result(self._data, result)
         self._mutate_result(result)
+        yield result
+
+    def _get_additional_results_and_update(self, result, content):
+        for new_result in self._clazz(content).parse_results(self._rows, self._data):
+            updated_result = copy.copy(result)
+            updated_result.update(new_result)
+            self._mutate_result(updated_result)
+            yield updated_result
+
+    def update_result(self, result, content):
+        if self._rows is None:
+            results = self._update_result(result, content)
+        else:
+            results = self._get_additional_results_and_update(result, content)
+
+        return list(results)
 
     def get_and_update_result(self, result):
-        self.update_result(result, self._get_content(**result))
+        return self.update_result(result, self._get_content(**result))
 
 
 class ResultsParser(_BaseParser):
@@ -81,16 +104,18 @@ def _run(pool, func, iterable):
     return list(pool.map(func, iterable))
 
 
-def _with_failed_item(func):
-    def wrapper(result):
-        try:
-            func(result)
-            return None
-        except Exception as e:
-            logging.warning("Failed to execute {}: {}".format(func.__name__, e))
-            return result
+def safe_call(on_failure):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                logging.warning("Failed to execute {}: {}".format(func.__name__, e))
+                return on_failure
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 class Scraper(object):
@@ -150,13 +175,11 @@ class Scraper(object):
             self._format_query(keyword, formats), ignore_failed_updates=ignore_failed_updates, pool=pool)
 
     def parse_query(self, query, ignore_failed_updates=True, pool=None):
-        decorator = _with_failed_item if ignore_failed_updates else lambda x: x
+        decorator = safe_call(()) if ignore_failed_updates else lambda x: x
         results = self._results_parser.get_and_parse_results(query)
 
         for parser in self._additional_parsers:
-            for result in _run(pool, decorator(parser.get_and_update_result), results):
-                if result is not None:
-                    results.remove(result)
+            results = list(itertools.chain(*_run(pool, decorator(parser.get_and_update_result), results)))
 
         if len(results) == 0:
             logging.warning("No results found for query: {}".format(query))

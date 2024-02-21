@@ -112,8 +112,9 @@ may be used.
 
 ### using an additional parser
 
-Additional parsers are optional parsers which are run after the main parser (`results_parser`) has run. These don't have
-the `rows` definition as it can only be defined once.
+Additional parsers are optional parsers which are run after the main parser (`results_parser`) has run. These may or may
+not have the `rows` definition - if present, the results will be updated to contain the new ones caught by this parser;
+if not present, the current results are updated to contain the `data` parameters.
 
 ```json
 [
@@ -191,7 +192,7 @@ One can parse json data by setting `results_parser.type` as `json`.
 ### mutating data
 
 In the below example, `size` is first parsed by the `results_parser.data` and then it is converted to a human-readable
-size by `results_parser.mutate` (note `{size!b}`).
+size by `results_parser.mutate` (note `{size!b}`). Mutations can be defined either by an object or an array of objects.
 
 ```json
 [
