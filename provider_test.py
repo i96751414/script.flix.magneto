@@ -11,9 +11,9 @@ import jsonschema
 import requests
 from defusedxml import ElementTree, minidom
 
+from lib.filters import Resolution, ReleaseType
 from lib.parsers import XMLParser, JSONParser, HTMLParser, create_xml_tree
 from lib.scraper import Scraper, ScraperRunner
-from lib.filters import Resolution, ReleaseType
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_PATH = os.path.join(ROOT_PATH, "resources")
@@ -26,6 +26,16 @@ COLOR_REGEX = re.compile(r"^[0-9A-Fa-f]{8}$")
 
 class ValidationError(Exception):
     pass
+
+
+# noinspection PyProtectedMember
+def get_data_keys(scraper):
+    parsers = scraper._results_parser, *scraper._additional_parsers
+    for parser in parsers:
+        for key in parser._data:
+            yield key
+        for key, _ in parser._mutate:
+            yield key
 
 
 def verify(providers_path, schema_path, settings_path):
@@ -44,6 +54,12 @@ def verify(providers_path, schema_path, settings_path):
 
     for provider in data:
         scraper = Scraper.from_data(provider)
+        scraper_data = set(get_data_keys(scraper))
+
+        for key, level in (("title", logging.ERROR), ("magnet", logging.ERROR),
+                           ("seeds", logging.WARN), ("leeches", logging.WARN), ("size", logging.WARN)):
+            if key not in scraper_data:
+                logging.log(level, "data.%s not defined for provider %s", key, scraper.name)
 
         icon = scraper.get_attribute("icon", default=None)
         if icon:
@@ -106,6 +122,7 @@ def get_scrapers(args):
 
 
 def print_results(scraper_name, results):
+    print("- Found a total of {} results".format(len(results)))
     for result in results:
         title = result["title"]
         seeds = result.get("seeds")
