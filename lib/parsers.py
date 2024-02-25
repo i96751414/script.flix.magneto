@@ -29,9 +29,19 @@ class ETParser(object):
         return [{key: self._xpath_element(element, xpath) for key, xpath in data.items()}
                 for element in self._root.iterfind(rows)]
 
+    def get_element(self, xpath):
+        return self._xpath_element(self._root, xpath)
+
+    def try_get_element(self, xpath, default=None):
+        try:
+            return self.get_element(xpath)
+        except Exception as e:
+            logging.debug("Unable to get element at %s: %s", xpath, e)
+            return default
+
     def update_result(self, data, result):
         for key, xpath in data.items():
-            result[key] = self._xpath_element(self._root, xpath)
+            result[key] = self.get_element(xpath)
 
     def _xpath_find(self, element, path):
         paths = self._parents_re.split(path)

@@ -43,13 +43,22 @@ class _BaseParser(object):
         for key, value in self._mutate:
             result[key] = _formatter.format(value, **result)
 
-    def _get_content(self, **kwargs):
-        url_formatted = _formatter.format(self._url, **kwargs)
-        full_url = url_formatted if self._base_url is None else urljoin(self._base_url, url_formatted)
-        logging.debug("Getting content for url %s", full_url)
-        r = self._session.get(full_url, timeout=self._timeout)
+    def _get_full_url(self, url, base_url=None):
+        if base_url is None:
+            if self._base_url is None:
+                full_url = url
+            else:
+                full_url = urljoin(self._base_url, url)
+        else:
+            full_url = urljoin(base_url, url)
+        return full_url
+
+    def _get_content(self, url):
+        # type: (str) -> (str, bytes)
+        logging.debug("Getting content for url %s", url)
+        r = self._session.get(url, timeout=self._timeout)
         r.raise_for_status()
-        return r.content
+        return r.url, r.content
 
 
 class AdditionalParser(_BaseParser):
@@ -70,7 +79,9 @@ class AdditionalParser(_BaseParser):
             self._mutate_result(updated_result)
             yield updated_result
 
-    def update_result(self, result, content):
+    def get_and_update_result(self, result):
+        _, content = self._get_content(self._get_full_url(_formatter.format(self._url, **result)))
+
         if self._rows is None:
             results = self._update_result(result, content)
         else:
@@ -78,24 +89,58 @@ class AdditionalParser(_BaseParser):
 
         return list(results)
 
-    def get_and_update_result(self, result):
-        return self.update_result(result, self._get_content(**result))
-
 
 class ResultsParser(_BaseParser):
-    def __init__(self, rows, *args, **kwargs):
-        # type: (str, any, any) -> None
+    def __init__(self, rows, *args, total_pages=1, next_page_url_type="xpath", next_page_url=None, **kwargs):
+        # type: (str, any, int, str, str, any) -> None
         super(ResultsParser, self).__init__(*args, **kwargs)
         self._rows = rows
 
-    def parse_results(self, content):
-        results = self._clazz(content).parse_results(self._rows, self._data)
+        if total_pages is None or total_pages <= 1 or next_page_url is None:
+            self._total_pages = 1
+            self._next_page_parser_cb = lambda parser, **kw: None
+        else:
+            self._total_pages = total_pages
+            if next_page_url_type == "static":
+                self._next_page_parser_cb = lambda parser, **kw: _formatter.format(next_page_url, **kw)
+            elif next_page_url_type == "xpath":
+                self._next_page_parser_cb = lambda parser, **kw: parser.try_get_element(next_page_url)
+            else:
+                raise ValueError("next_page_url_type must be one of static/xpath")
+
+    def _get_and_parse_results(self, url, page=1, **kwargs):
+        real_url, content = self._get_content(url)
+        parser = self._clazz(content)
+        results = parser.parse_results(self._rows, self._data)
         for result in results:
             self._mutate_result(result)
-        return results
+        return results, real_url, self._next_page_parser_cb(parser, page=page + 1, **kwargs)
 
     def get_and_parse_results(self, query):
-        return self.parse_results(self._get_content(query=query))
+        url = self._get_full_url(_formatter.format(self._url, query=query))
+        results, base_url, next_page = self._get_and_parse_results(url, query=query)
+
+        # Handle next pages, if any
+        if next_page is not None:
+            visited_urls = [base_url]
+
+            for page in range(2, self._total_pages + 1):
+                new_page_url = self._get_full_url(next_page, base_url=base_url)
+                # Check for recursive calls
+                if new_page_url in visited_urls:
+                    break
+
+                new_results, base_url, next_page = self._get_and_parse_results(new_page_url, page=page, query=query)
+                if len(new_results) == 0:
+                    break
+
+                results.extend(new_results)
+                if next_page is None:
+                    break
+
+                visited_urls.append(new_page_url)
+
+        return results
 
 
 def _run(pool, func, iterable):

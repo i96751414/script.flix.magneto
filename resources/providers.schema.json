@@ -193,6 +193,30 @@
           "$ref": "#/definitions/parser"
         },
         {
+          "properties": {
+            "next_page_url": {
+              "type": "string",
+              "title": "The next page url definition",
+              "description": "The next page url of the content to be scraped. It can be defined either using static or xpath form"
+            },
+            "next_page_url_type": {
+              "type": "string",
+              "title": "The type of the next page url definition",
+              "description": "Tells the parser how to interpret 'next_page_url' definition",
+              "enum": [
+                "xpath",
+                "static"
+              ],
+              "default": "xpath"
+            },
+            "total_pages": {
+              "type": "integer",
+              "title": "The total number of pages to parse",
+              "description": "The total number of pages to parse. If 1, no additional pages are parsed - only the main page is fetched for results",
+              "minimum": 1,
+              "default": 1
+            }
+          },
           "required": [
             "rows"
           ]
