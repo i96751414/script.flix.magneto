@@ -43,15 +43,11 @@ class _BaseParser(object):
         for key, value in self._mutate:
             result[key] = _formatter.format(value, **result)
 
-    def _get_full_url(self, url, base_url=None):
-        if base_url is None:
-            if self._base_url is None:
-                full_url = url
-            else:
-                full_url = urljoin(self._base_url, url)
-        else:
-            full_url = urljoin(base_url, url)
-        return full_url
+    def _get_url_formatted(self, **kwargs):
+        return _formatter.format(self._url, **kwargs)
+
+    def _get_full_url(self, url):
+        return urljoin(self._base_url, url)
 
     def _get_content(self, url):
         # type: (str) -> (str, bytes)
@@ -80,7 +76,7 @@ class AdditionalParser(_BaseParser):
             yield updated_result
 
     def get_and_update_result(self, result):
-        _, content = self._get_content(self._get_full_url(_formatter.format(self._url, **result)))
+        _, content = self._get_content(self._get_full_url(self._get_url_formatted(**result)))
 
         if self._rows is None:
             results = self._update_result(result, content)
@@ -117,7 +113,7 @@ class ResultsParser(_BaseParser):
         return results, real_url, self._next_page_parser_cb(parser, page=page + 1, **kwargs)
 
     def get_and_parse_results(self, query):
-        url = self._get_full_url(_formatter.format(self._url, query=query))
+        url = self._get_full_url(self._get_url_formatted(query=query))
         results, base_url, next_page = self._get_and_parse_results(url, query=query)
 
         # Handle next pages, if any
@@ -125,7 +121,7 @@ class ResultsParser(_BaseParser):
             visited_urls = [base_url]
 
             for page in range(2, self._total_pages + 1):
-                new_page_url = self._get_full_url(next_page, base_url=base_url)
+                new_page_url = urljoin(base_url, next_page)
                 # Check for recursive calls
                 if new_page_url in visited_urls:
                     break
