@@ -94,23 +94,23 @@ class ResultsParser(_BaseParser):
 
         if total_pages is None or total_pages <= 1 or next_page_url is None:
             self._total_pages = 1
-            self._next_page_parser_cb = lambda parser, **kw: None
+            self._next_page_cb = lambda parser, **kw: None
         else:
             self._total_pages = total_pages
             if next_page_url_type == "static":
-                self._next_page_parser_cb = lambda parser, **kw: _formatter.format(next_page_url, **kw)
+                self._next_page_cb = lambda parser, page=1, **kw: _formatter.format(next_page_url, page=page + 1, **kw)
             elif next_page_url_type == "xpath":
-                self._next_page_parser_cb = lambda parser, **kw: parser.try_get_element(next_page_url)
+                self._next_page_cb = lambda parser, **kw: parser.try_get_element(next_page_url)
             else:
                 raise ValueError("next_page_url_type must be one of static/xpath")
 
-    def _get_and_parse_results(self, url, page=1, **kwargs):
+    def _get_and_parse_results(self, url, **kwargs):
         real_url, content = self._get_content(url)
         parser = self._clazz(content)
         results = parser.parse_results(self._rows, self._data)
         for result in results:
             self._mutate_result(result)
-        return results, real_url, self._next_page_parser_cb(parser, page=page + 1, **kwargs)
+        return results, real_url, self._next_page_cb(parser, **kwargs)
 
     def get_and_parse_results(self, query):
         url = self._get_full_url(self._get_url_formatted(query=query))
@@ -124,6 +124,7 @@ class ResultsParser(_BaseParser):
                 new_page_url = urljoin(base_url, next_page)
                 # Check for recursive calls
                 if new_page_url in visited_urls:
+                    logging.warning("Detected an already visited URL: %s", new_page_url)
                     break
 
                 new_results, base_url, next_page = self._get_and_parse_results(new_page_url, page=page, query=query)
@@ -151,7 +152,7 @@ def safe_call(on_failure):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logging.warning("Failed to execute {}: {}".format(func.__name__, e))
+                logging.warning("Failed to execute %s: %s", func.__name__, e)
                 return on_failure
 
         return wrapper
@@ -223,7 +224,7 @@ class Scraper(object):
             results = list(itertools.chain(*_run(pool, decorator(parser.get_and_update_result), results)))
 
         if len(results) == 0:
-            logging.warning("No results found for query: {}".format(query))
+            logging.warning("No results found for query: %s", query)
 
         return results
 

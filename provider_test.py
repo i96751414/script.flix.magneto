@@ -111,10 +111,10 @@ def xpath(args):
     parser = args.parser(r.content)
 
     if args.rows:
-        for element in parser._root.iterfind(args.rows):
-            logging.info(parser._xpath_element(element, args.xpath))
+        for result in parser.parse_results(args.rows, dict(data=args.xpath), full_elements=True):
+            logging.info(result["data"])
     else:
-        logging.info(parser._xpath_element(parser._root, args.xpath))
+        logging.info(parser.get_element(args.xpath, full_element=True))
 
 
 def get_scrapers(args):

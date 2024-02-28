@@ -6,7 +6,7 @@ from xml.etree.ElementTree import Element, SubElement  # nosec
 import htmlement
 from defusedxml import ElementTree
 
-from lib.utils import text
+from lib.utils import text, PY3
 
 
 class ETParser(object):
@@ -18,6 +18,7 @@ class ETParser(object):
     def __init__(self, root):
         self._root = root
         self._parents = None
+        self._encoding = "unicode" if PY3 else "utf-8"
 
     @property
     def parents(self):
@@ -25,16 +26,16 @@ class ETParser(object):
             self._parents = dict((c, p) for p in self._root.iter() for c in p)
         return self._parents
 
-    def parse_results(self, rows, data):
-        return [{key: self._xpath_element(element, xpath) for key, xpath in data.items()}
+    def parse_results(self, rows, data, full_elements=False):
+        return [{key: self._xpath_element(element, xpath, full_element=full_elements) for key, xpath in data.items()}
                 for element in self._root.iterfind(rows)]
 
-    def get_element(self, xpath):
-        return self._xpath_element(self._root, xpath)
+    def get_element(self, xpath, full_element=False):
+        return self._xpath_element(self._root, xpath, full_element=full_element)
 
-    def try_get_element(self, xpath, default=None):
+    def try_get_element(self, xpath, full_element=False, default=None):
         try:
-            return self.get_element(xpath)
+            return self.get_element(xpath, full_element=full_element)
         except Exception as e:
             logging.debug("Unable to get element at %s: %s", xpath, e)
             return default
@@ -57,7 +58,7 @@ class ETParser(object):
             element = element.find(paths[0])
         return element
 
-    def _xpath_element(self, element, path):
+    def _xpath_element(self, element, path, full_element=False):
         logging.debug("Getting %s path from element %s", path, element.tag)
         attr_match = self._attr_re.match(path)
         if attr_match:
@@ -68,6 +69,8 @@ class ETParser(object):
         tail_match = self._tail_re.match(path)
         if tail_match:
             return self._xpath_find(element, tail_match.group(1)).tail
+        if full_element:
+            return ElementTree.tostring(self._xpath_find(element, path), encoding=self._encoding)
         raise ValueError("Only .../@attr, .../text() and .../tail() paths are supported")
 
 

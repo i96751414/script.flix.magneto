@@ -1,4 +1,5 @@
 import re
+import sys
 
 try:
     from urllib.parse import unquote, unquote_plus
@@ -6,6 +7,7 @@ except ImportError:
     # noinspection PyUnresolvedReferences
     from urllib import unquote, unquote_plus
 
+PY3 = sys.version_info.major >= 3
 text = u"".__class__
 
 
