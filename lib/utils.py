@@ -1,11 +1,12 @@
 import re
 import sys
+from base64 import b32decode
+from binascii import hexlify
 
 try:
-    from urllib.parse import unquote, unquote_plus
+    from urlparse import urlparse, parse_qs
 except ImportError:
-    # noinspection PyUnresolvedReferences
-    from urllib import unquote, unquote_plus
+    from urllib.parse import urlparse, parse_qs
 
 PY3 = sys.version_info.major >= 3
 text = u"".__class__
@@ -40,29 +41,90 @@ class InvalidMagnet(Exception):
 
 
 class Magnet(object):
-    _info_hash_re = re.compile(r"\burn:btih:([A-Fa-f\d]{40})\b")
-    _tracker_re = re.compile(r"\btr=([^&]+)")
-    _name_re = re.compile(r"\bdn=([^&]+)")
+    _info_hash_re = re.compile(r"^(?:urn:btih:(?:([A-Fa-f\d]{40})|([A-Za-z2-7]{32}))|urn:btmh:1220([A-Fa-f\d]{64}))$")
 
-    def __init__(self, magnet):
-        self._magnet = magnet
+    def __init__(self, info_hash, dn=None, xl=None, tr=(), xs=None, as_=None, ws=(), kt=None, supplements=None):
+        self._info_hash = info_hash
+        self._dn = dn
+        self._xl = xl
+        self._tr = tr
+        self._xs = xs
+        self._as = as_
+        self._ws = ws
+        self._kt = kt.split() if kt else []
+        self._supplements = supplements or {}
 
     @property
-    def magnet(self):
-        return self._magnet
+    def info_hash(self):
+        return self._info_hash
 
-    def parse_info_hash(self):
-        match = self._info_hash_re.search(self._magnet)
-        if match is None:
+    @classmethod
+    def parse_info_hash(cls, xt):
+        match = cls._info_hash_re.match(xt)
+        if not match:
             raise InvalidMagnet("Unable to parse info hash from magnet")
-        return match.group(1).lower()
 
-    def parse_trackers(self):
-        return [unquote(t) for t in self._tracker_re.findall(self._magnet)]
+        sha1_hash, base32_hash, sha256_hash = match.groups()
+        if sha1_hash is not None:
+            info_hash = sha1_hash
+        elif base32_hash is not None:
+            info_hash = hexlify(b32decode(base32_hash)).decode()
+        else:
+            # TODO: Currently not supporting v2 info hashes
+            raise InvalidMagnet("v2 info hashes are not supported")
 
-    def parse_name(self):
-        match = self._name_re.search(self._magnet)
-        return unquote_plus(match.group(1)) if match else None
+        return info_hash.lower()
+
+    @classmethod
+    def from_string(cls, uri, ignore_unknown=True):
+        info = urlparse(uri.strip(), scheme="magnet", allow_fragments=False)
+        if not info.scheme == "magnet":
+            raise InvalidMagnet("Not a magnet URI")
+
+        query = parse_qs(info.query)
+        xt_list = query.pop("xt", None)
+
+        if not xt_list:
+            raise InvalidMagnet("Missing exact topic ('xt')")
+        elif len(xt_list) > 1:
+            # TODO: Currently not supporting v2-hybrid info hashes
+            raise InvalidMagnet("Multiple exact topics ('xt')")
+
+        parameters = dict(info_hash=cls.parse_info_hash(xt_list[0]))  # type: dict[str, (str, list)]
+
+        def parse_single_value_param(param, name, internal_param=None):
+            param_list = query.pop(param, None)
+            if param_list:
+                if len(param_list) > 1:
+                    raise InvalidMagnet("Multiple {}s ('{}')".format(name, param))
+                parameters[internal_param or param] = param_list[0]
+
+        def parse_multi_value_param(param):
+            param_list = query.pop(param, None)
+            if param_list:
+                parameters[param] = param_list
+
+        def parse_supplements(internal_param):
+            parameters[internal_param] = {key[2:]: query.pop(key) for key in list(query.keys()) if key.startswith("x.")}
+
+        # Parameters that accept only one value
+        parse_single_value_param("dn", "display name")
+        parse_single_value_param("xl", "exact length")
+        parse_single_value_param("xs", "exact source")
+        parse_single_value_param("as", "acceptable source", "as_")
+        parse_single_value_param("kt", "keyword topic")
+
+        # Parameters that accept multiple values
+        parse_multi_value_param("tr")
+        parse_multi_value_param("ws")
+
+        # Parameters in supplement format
+        parse_supplements("supplements")
+
+        if not ignore_unknown and len(query) > 0:
+            raise InvalidMagnet("Unknown parameters: {}".format(list(query.keys())))
+
+        return cls(**parameters)
 
 
 resolution_colors = {
