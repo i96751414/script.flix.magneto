@@ -36,11 +36,11 @@ class Result(object):
         return colored_text(scraper.name, color)
 
     def _get_optional_fields(self, result):
-        for field in ("seeds", "leeches"):
+        for field_name, values in (("seeds", self._seeds), ("leeches", self._leeches)):
             try:
-                value = result.get(field)
+                value = result.get(field_name)
                 if value is not None:
-                    getattr(self, "_" + field).append(int(value))
+                    values.append(int(value))
             except ValueError:
                 pass
 
@@ -142,16 +142,18 @@ def perform_search(search_type, data):
                 if info_hash == "0" * 40:
                     continue
 
-                magnet_result = results.get(info_hash)  # type: Result
+                magnet_result = results.get(info_hash)
                 if magnet_result is None:
-                    result = Result(scraper, scraper_result)
-                    if include_result(result):
-                        results[info_hash] = result
+                    results[info_hash] = Result(scraper, scraper_result)
                 else:
                     magnet_result.add_result(scraper, scraper_result)
 
     # noinspection PyTypeChecker
-    return [r.to_provider_result() for r in sorted(results.values(), key=Result.get_factor, reverse=True)]
+    return [
+        r.to_provider_result()
+        for r in sorted(results.values(), key=Result.get_factor, reverse=True)
+        if include_result(r)
+    ]
 
 
 class ProgressScraperRunner(ScraperRunner):
