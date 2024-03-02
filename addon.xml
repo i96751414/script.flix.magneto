@@ -20,6 +20,7 @@
         <platform>all</platform>
         <assets>
             <icon>icon.png</icon>
+            <banner>resources/images/magneto_banner_thin.png</banner>
         </assets>
     </extension>
 </addon>
