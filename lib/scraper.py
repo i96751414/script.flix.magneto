@@ -22,7 +22,7 @@ _formatter = ExtendedFormatter()
 class _BaseParser(object):
     # noinspection PyShadowingBuiltins
     def __init__(self, url, data, base_url=None, type="html", mutate=(), session=None, timeout=None):
-        # type: (str, str, str, str, list[dict[str, str]] | dict[str, str], requests.Session, int) -> None
+        # type: (str, dict[str, str], str, str, list[dict[str, str]] | dict[str, str], requests.Session, int) -> None
         self._url = url
         self._data = data
         self._base_url = base_url
@@ -58,9 +58,9 @@ class _BaseParser(object):
 
 
 class AdditionalParser(_BaseParser):
-    def __init__(self, *args, rows=None, **kwargs):
-        # type: (any, str, any) -> None
-        super(AdditionalParser, self).__init__(*args, **kwargs)
+    def __init__(self, url, data, rows=None, **kwargs):
+        # type: (str, dict[str, str], str, any) -> None
+        super(AdditionalParser, self).__init__(url, data, **kwargs)
         self._rows = rows
 
     def _update_result(self, result, content):
@@ -87,9 +87,9 @@ class AdditionalParser(_BaseParser):
 
 
 class ResultsParser(_BaseParser):
-    def __init__(self, rows, *args, total_pages=1, next_page_url_type="xpath", next_page_url=None, **kwargs):
-        # type: (str, any, int, str, str, any) -> None
-        super(ResultsParser, self).__init__(*args, **kwargs)
+    def __init__(self, url, data, rows, total_pages=1, next_page_url_type="xpath", next_page_url=None, **kwargs):
+        # type: (str, dict[str, str], str, int, str, str, any) -> None
+        super(ResultsParser, self).__init__(url, data, **kwargs)
         self._rows = rows
 
         if total_pages is None or total_pages <= 1 or next_page_url is None:
