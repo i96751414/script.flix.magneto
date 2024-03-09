@@ -1,7 +1,7 @@
 ![](resources/images/magneto_banner.png)
 
 [![Build Status](https://github.com/i96751414/script.flix.magneto/workflows/build/badge.svg)](https://github.com/i96751414/script.flix.magneto/actions?query=workflow%3Abuild)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ffe8ff7028674c2db50a2b3d4de1cebc)](https://www.codacy.com/gh/i96751414/script.flix.magneto/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=i96751414/script.flix.magneto&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ffe8ff7028674c2db50a2b3d4de1cebc)](https://app.codacy.com/gh/i96751414/script.flix.magneto/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ## What it is
 
