@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import sys
+from contextlib import closing
 
 import jsonschema
 import requests
@@ -13,7 +14,7 @@ from defusedxml import ElementTree, minidom
 
 from lib.filters import Resolution, ReleaseType
 from lib.parsers import XMLParser, JSONParser, HTMLParser, create_xml_tree
-from lib.scraper import Scraper, ScraperRunner
+from lib.scraper import Scraper, ScraperRunner, default_session
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_PATH = os.path.join(ROOT_PATH, "resources")
@@ -102,13 +103,13 @@ def verify_and_print(args):
 
 # noinspection PyProtectedMember
 def xpath(args):
-    session = requests.Session()
-    session.headers = {"User-Agent": Scraper._user_agent, "Accept-Encoding": "gzip"}
-    r = session.get(args.url)
-    r.raise_for_status()
+    with default_session() as session:
+        with closing(session.get(args.url)) as response:
+            response.raise_for_status()
+            content = response.content
 
-    logging.debug("Url content:\n%s", r.content)
-    parser = args.parser(r.content)
+    logging.debug("Url content:\n%s", content)
+    parser = args.parser(content)
 
     if args.rows:
         for result in parser.parse_results(args.rows, dict(data=args.xpath), full_elements=True):
@@ -117,8 +118,9 @@ def xpath(args):
         logging.info(parser.get_element(args.xpath, full_element=True))
 
 
-def get_scrapers(args):
-    return [s for s in Scraper.get_scrapers(args.providers_path) if not args.provider_id or args.provider_id == s.id]
+def get_scrapers(args, session=None):
+    return [s for s in Scraper.get_scrapers(args.providers_path, session=session)
+            if not args.provider_id or args.provider_id == s.id]
 
 
 def print_results(scraper_name, results):
@@ -190,15 +192,17 @@ def generate_settings_and_save(args):
 
 
 def parse_query(args):
-    with ScraperRunner(get_scrapers(args)) as runner:
-        for scraper, results in runner.parse_query(args.search):
-            print_results(scraper.name, results)
+    with default_session() as session:
+        with ScraperRunner(get_scrapers(args, session=session)) as runner:
+            for scraper, results in runner.parse_query(args.search):
+                print_results(scraper.name, results)
 
 
 def parse_media(args):
-    with ScraperRunner(get_scrapers(args)) as runner:
-        for scraper, results in runner.parse(args.parser, {f: getattr(args, f) or "" for f in args.fields}):
-            print_results(scraper.name, results)
+    with default_session() as session:
+        with ScraperRunner(get_scrapers(args, session=session)) as runner:
+            for scraper, results in runner.parse(args.parser, {f: getattr(args, f) or "" for f in args.fields}):
+                print_results(scraper.name, results)
 
 
 def convert_json_to_xml(args):
@@ -208,7 +212,8 @@ def convert_json_to_xml(args):
         with open(args.path, "rb") as f:
             data = f.read()
 
-    print(minidom.parseString(ElementTree.tostring(create_xml_tree(json.loads(data)))).toprettyxml(indent=" " * 4))
+    xml = ElementTree.tostring(create_xml_tree(json.loads(data)))
+    print(minidom.parseString(xml).toprettyxml(indent=" " * 4))
 
 
 def main():

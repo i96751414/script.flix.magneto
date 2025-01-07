@@ -11,7 +11,7 @@ from xbmcgui import DialogProgressBG
 from flix.kodi import ADDON_PATH, ADDON_NAME, get_boolean_setting, get_int_setting, translate
 from flix.provider import Provider, ProviderResult
 from lib.filters import Unknown, Resolution, ReleaseType, SceneTags, VideoCodec, AudioCodec
-from lib.scraper import Scraper, ScraperRunner
+from lib.scraper import Scraper, ScraperRunner, default_session
 from lib.utils import CachedCall, Title, Magnet, InvalidMagnet, resolution_colors, colored_text, bold
 
 
@@ -120,33 +120,34 @@ def include_result(result, get_setting=CachedCall(get_boolean_setting)):
 
 def perform_search(search_type, data):
     results = {}
-    scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
-                                                timeout=get_int_setting("scraper_timeout"))
-                if get_boolean_setting(s.id)]
+    with default_session() as session:
+        scrapers = [s for s in Scraper.get_scrapers(os.path.join(ADDON_PATH, "resources", "providers.json"),
+                                                    timeout=get_int_setting("scraper_timeout"), session=session)
+                    if get_boolean_setting(s.id)]
 
-    if not scrapers:
-        logging.warning("No scrapers configured/enabled")
-        return None
+        if not scrapers:
+            logging.warning("No scrapers configured/enabled")
+            return None
 
-    runner_class = ProgressScraperRunner if get_boolean_setting("enable_bg_dialog") else ScraperRunner
-    with runner_class(scrapers, num_threads=get_int_setting("thread_number")) as runner:
-        runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
+        runner_class = ProgressScraperRunner if get_boolean_setting("enable_bg_dialog") else ScraperRunner
+        with runner_class(scrapers, num_threads=get_int_setting("thread_number")) as runner:
+            runner_data = runner.parse_query(data) if search_type == "query" else runner.parse(search_type, data)
 
-        for scraper, scraper_results in runner_data:
-            logging.debug("Processing %s scraper results", scraper.name)
-            for scraper_result in scraper_results:
-                try:
-                    info_hash = Magnet.from_string(scraper_result["magnet"]).info_hash
-                except InvalidMagnet:
-                    continue
-                if info_hash == "0" * 40:
-                    continue
+            for scraper, scraper_results in runner_data:
+                logging.debug("Processing %s scraper results", scraper.name)
+                for scraper_result in scraper_results:
+                    try:
+                        info_hash = Magnet.from_string(scraper_result["magnet"]).info_hash
+                    except InvalidMagnet:
+                        continue
+                    if info_hash == "0" * 40:
+                        continue
 
-                magnet_result = results.get(info_hash)
-                if magnet_result is None:
-                    results[info_hash] = Result(scraper, scraper_result)
-                else:
-                    magnet_result.add_result(scraper, scraper_result)
+                    magnet_result = results.get(info_hash)
+                    if magnet_result is None:
+                        results[info_hash] = Result(scraper, scraper_result)
+                    else:
+                        magnet_result.add_result(scraper, scraper_result)
 
     # noinspection PyTypeChecker
     return [

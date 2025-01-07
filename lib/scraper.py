@@ -19,6 +19,17 @@ except ImportError:
 _formatter = ExtendedFormatter()
 
 
+def default_session():
+    session = requests.Session()
+    session.headers = {
+        "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                       "Chrome/102.0.5005.63 Safari/537.36"),
+        "Accept-Encoding": "gzip",
+    }
+    return session
+
+
 class _BaseParser(object):
     # noinspection PyShadowingBuiltins
     def __init__(self, url, data, base_url=None, type="html", mutate=(), session=None, timeout=None):
@@ -162,20 +173,15 @@ def safe_call(on_failure):
 
 class Scraper(object):
     _spaces_re = re.compile(r"\s+")
-    _user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/102.0.5005.63 Safari/537.36")
 
     @classmethod
-    def get_scrapers(cls, path, timeout=None):
+    def get_scrapers(cls, path, timeout=None, session=None):
         with open(path) as f:
-            return [cls.from_data(data, timeout=timeout) for data in json.load(f)]
+            return [cls.from_data(data, timeout=timeout, session=session) for data in json.load(f)]
 
     @classmethod
-    def from_data(cls, data, timeout=None):
+    def from_data(cls, data, timeout=None, session=None):
         base_url = data["base_url"]
-        session = requests.Session()
-        session.headers = {"User-Agent": cls._user_agent, "Accept-Encoding": "gzip"}
         return cls(
             data["name"], ResultsParser(base_url=base_url, session=session, timeout=timeout, **data["results_parser"]),
             additional_parsers=[AdditionalParser(base_url=base_url, session=session, timeout=timeout, **d)
