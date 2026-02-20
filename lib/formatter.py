@@ -2,6 +2,7 @@ import ast
 import re
 import unicodedata
 from string import Formatter
+import operator
 
 try:
     from ast import Constant
@@ -32,12 +33,8 @@ def regex_replace(value, pattern, repl):
     return re.sub(pattern, repl, value)
 
 
-def get_at_index(value, index):
-    return value[index]
-
-
 class ExtendedFormatter(Formatter):
-    _safe_calls = dict(replace=regex_replace, split=str.split, get=get_at_index)
+    _safe_calls = dict(replace=regex_replace, split=str.split, get=operator.getitem)
 
     def convert_field(self, value, conversion):
         if conversion == "u":
@@ -58,43 +55,43 @@ class ExtendedFormatter(Formatter):
         elif format_spec.endswith(")") and "(" in format_spec:
             # Experimental
             # Poor check for function format on purpose
-            for function, args in self.parse_functions(format_spec):
-                value = function(value, *args)
+            value = self.evaluate_calls(value, format_spec)
             if not isinstance(value, str):
                 value = str(value)
             return value
         return super(ExtendedFormatter, self).format_field(value, format_spec)
 
-    def parse_functions(self, string):
-        return self._parse_functions(ast.parse(string, mode="eval").body)
+    def evaluate_calls(self, value, string):
+        return self._evaluate_calls(value, ast.parse(string, mode="eval").body)
 
-    def _parse_functions(self, node):
+    def _evaluate_calls(self, value, node):
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name):
-                yield self._get_call_and_args(node.func.id, node.args)
-            elif isinstance(node.func, ast.Attribute):
-                for ret in self._parse_functions(node.func.value):
-                    yield ret
-                yield self._get_call_and_args(node.func.attr, node.args)
-            else:
-                raise ValueError("Unexpected function call")
-        else:
-            raise ValueError("Not a function call")
+                return self._execute_call(node.func.id, value, node)
+            if isinstance(node.func, ast.Attribute):
+                return self._execute_call(node.func.attr, self._evaluate_calls(value, node.func.value), node)
+            raise ValueError("Unexpected function call")
+        raise ValueError("Unsupported syntax")
 
-    def _get_call_and_args(self, node_name, node_args):
-        call = self._safe_calls.get(node_name)
+    def _execute_call(self, name, value, node):
+        call = self._safe_calls.get(name)
         if call is not None:
-            return call, tuple(self._get_args(node_args))
-        raise ValueError("Unsupported function call: {}".format(node_name))
+            args = tuple(self._get_arg(arg) for arg in node.args)
+            kwargs = {kw.arg: self._get_arg(kw.value) for kw in node.keywords}
+            return call(value, *args, **kwargs)
+        raise ValueError("Unsupported function call: {}".format(name))
 
     @staticmethod
-    def _get_args(node_args):
-        for a in node_args:
-            if isinstance(a, Constant):
-                yield a.value
-            elif isinstance(a, ast.Str):
-                yield a.s
-            elif isinstance(a, ast.Num):
-                yield a.n
-            else:
-                raise ValueError("Unsupported argument: {}".format(a))
+    def _get_arg(node):
+        if isinstance(node, Constant):
+            return node.value
+        if isinstance(node, ast.Str):
+            return node.s
+        if isinstance(node, ast.Num):
+            return node.n
+
+        raise ValueError("Unsupported argument: {}".format(node))
+
+
+f = ExtendedFormatter()
+print(f.format("{a:replace('a','b').replace('b','B')}", a="1a2a3"))
